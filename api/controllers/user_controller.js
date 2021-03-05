@@ -16,7 +16,7 @@ exports.register = async (req, res) => {
     const tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
     const dialCode = req.body.dialCode
     const age=req.body.day+"/"+req.body.month+"/"+req.body.year
-    const user_data = await user_collection.findOne({$or:[{tel: tel}] }).exec();
+    const user_data = await user_collection.findOne({tel: tel}).exec();
     if (user_data != null) {
       res.status(res.statusCode).json({
         message: "user alredy exist",
@@ -33,6 +33,7 @@ exports.register = async (req, res) => {
         tel,
         age
       });
+
       var error = User.validateSync();
       if (error != undefined) {
         res.status(res.statusCode).json({
@@ -47,6 +48,8 @@ exports.register = async (req, res) => {
           result,
           state:true
         });
+      }).catch(e=>{
+        console.log(e.message)
       });
     }
   } catch (err) {
@@ -62,8 +65,8 @@ exports.loginFacebook = async (req, res) => {
     const user_data = {
       _id: userdata._id,
   };
-     jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: req.body.expiresIn },
-      (err, token) => {
+     jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
+      async (err, token) => {
         if(err){
           res.status(res.statusCode).json({
             message: err.message,
@@ -72,11 +75,21 @@ exports.loginFacebook = async (req, res) => {
 
           });
         }else{
-          res.status(res.statusCode).json({
-            message: "login succeeded",
-            token: token,
-            state: true,
-          });
+          //creation fo refreshToken
+          const ref_token = await jwt.sign({ user_auth: user_data }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
+          /***Create new refToken */
+           const refreshAccessToken= new refreshAccessToken_collection({
+              _id: new Mongoose.Types.ObjectId(),
+              ref_token:ref_token,
+              userid: user_data._id,
+          })
+          refreshAccessToken.save().then()
+            res.status(res.statusCode).json({
+              message: "login succeeded",
+              token: token,
+              ref_token:ref_token,
+              state: true,
+            });
         }
 
       },
@@ -85,7 +98,7 @@ exports.loginFacebook = async (req, res) => {
 
   }else{
     const idfacebook=req.body.id;
-    const userProfileImageUrl=req.body.picture
+    const userProfileImageUrl=req.body.urlImage
     const User = new user_collection({
       _id: new Mongoose.Types.ObjectId(),
       biography:"Taking chances almost always makes for happy endings.",
@@ -93,11 +106,11 @@ exports.loginFacebook = async (req, res) => {
       userProfileImageUrl,
     });
     User.save().then( () => {
-      const user_data = {
-        _id: userdata._id,
+      const newUserInfo= {
+        _id: User._id,
     };
-       jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: req.body.expiresIn },
-      (err, token) => {
+       jwt.sign({ user_auth: newUserInfo },process.env.secret_key_token,{ expiresIn: '10s' },
+      async (err, token) => {
         if(err){
           res.status(res.statusCode).json({
             message: err.message,
@@ -105,20 +118,32 @@ exports.loginFacebook = async (req, res) => {
             state: false,
           });
         }else{
-          res.status(res.statusCode).json({
-            message: "login succeeded",
-            token: token,
-            state: true,
-          });
+          //creation fo refreshToken
+          const ref_token = await jwt.sign({ user_auth: newUserInfo }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
+          /***Create new refToken */
+           const refreshAccessToken= new refreshAccessToken_collection({
+              _id: new Mongoose.Types.ObjectId(),
+              ref_token:ref_token,
+              userid: newUserInfo._id,
+          })
+          refreshAccessToken.save().then(()=>{
+            res.status(res.statusCode).json({
+              message: "login succeeded",
+              token: token,
+              ref_token:ref_token,
+              state: true,
+            });
+          })
         }
       },
     );
+    }).catch(e=>{
+      console.log(e)
     });
   }
 
 }
 exports.login = async (req, res) => {
-
   const userdata = await user_collection.findOne({ tel: req.body.tel }).exec();
   if (userdata != null) {
     if (await bcrypt.compare(req.body.password, userdata.password)) {
@@ -126,7 +151,7 @@ exports.login = async (req, res) => {
           tel: req.body.tel,
           _id: userdata._id,
       };
-      const token = await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
+       await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
        async (err, token) => {
           if(err){
             res.status(res.statusCode).json({
@@ -300,15 +325,55 @@ exports.UnFollowUser=(req,res)=>{
 
 }
 exports.getUserData=(req,res)=>{
-  user_collection.findOne({ _id: req.verified.user_auth._id }).exec().then(result=>{
+  /*user_collection.findOne({ _id: req.verified.user_auth._id }).exec().then(result=>{
+    res.status(res.statusCode).json({
+      data: result,
+      status: res.statusCode,
+    });
+  })*/
+  try{
+    user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},{$project: { userProfileImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
+      res.status(res.statusCode).json({
+        data: result,
+        status: res.statusCode,
+      });
+    })
+  }catch(e){
+    res.status(res.statusCode).json({
+      message: e.message,
+      status: res.statusCode,
+    });
+  }
+}
+exports.getotherUsersData=async (req,res)=>{
+
+    try{
+  user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id) }},{$project: { userProfileImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
     res.status(res.statusCode).json({
       data: result,
       status: res.statusCode,
     });
   })
+}catch(e){
+  res.status(res.statusCode).json({
+    message: e.message,
+    status: res.statusCode,
+  });
+}
+}
+
+exports.changeprofileimage=async (req,res)=>{
+ // const publicIp = require('public-ip');
+//	console.log(await publicIp.v4());
+  let data = await user_collection.findOneAndUpdate({ _id: req.verified.user_auth._id}, { $set: {userProfileImageUrl:process.env.ip+req.file.path} }, { new: true }).select('userProfileImageUrl').exec().then(()=>{
+    res.status(res.statusCode).json({
+      Picurl: process.env.ip+req.file.path,
+      status: res.statusCode,
+    });
+  }).catch(e=>{
+    res.status(res.statusCode).json({
+      message: e.statusCode,
+    });
+  })
 
 }
-exports.getotherUsersData=(req,res)=>{
-
-}
-

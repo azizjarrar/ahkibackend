@@ -34,7 +34,7 @@ mongoose.connect(
     app.use(bodyparser.urlencoded({ extended: true }))
     app.use(bodyparser.json())
     app.use(morgan('dev'))
-
+    app.use('/uploads',express.static('./uploads'))
     app.use('/user', user_route)
     app.use('/token', refreshAccessToken_route)
     /***************for sending pics in random chat*********************/
