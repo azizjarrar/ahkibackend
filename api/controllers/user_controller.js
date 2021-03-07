@@ -8,31 +8,46 @@ const fs = require("fs");
 
 ENV.config();
 exports.register = async (req, res) => {
+  var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
+  var result
+  var User
   try {
-    const saltRounds = await bcrypt.genSalt(10);
-    const hasdhedPassword = await bcrypt.hash(req.body.password, saltRounds);
-    const password = hasdhedPassword;
-    const userName = req.body.userName;
-    const tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
-    const dialCode = req.body.dialCode
-    const age=req.body.day+"/"+req.body.month+"/"+req.body.year
-    const user_data = await user_collection.findOne({tel: tel}).exec();
-    if (user_data != null) {
-      res.status(res.statusCode).json({
-        message: "user alredy exist",
-        status: res.statusCode,
-        state:false
-      });
-    } else {
-      const User = new user_collection({
+    if(req.body.tel!=undefined){
+        tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
+        result  = await   user_collection.findOne({tel:tel}).exec()
+
+        dialCode = req.body.dialCode
+        saltRounds = await bcrypt.genSalt(10);
+        hasdhedPassword = await bcrypt.hash(req.body.password, saltRounds);
+        password = hasdhedPassword;
+        userName = req.body.userName;
+        age=req.body.birthDay.day+"/"+req.body.birthDay.month+"/"+req.body.birthDay.year
+         User = new user_collection({
+          _id: new Mongoose.Types.ObjectId(),
+          biography:"Taking chances almost always makes for happy endings.",
+          userName,
+          password,
+          dialCode,
+          tel,
+          age,
+        });
+    }else{
+       result  = await   user_collection.findOne({email:req.body.email}).exec()
+       saltRounds = await bcrypt.genSalt(10);
+       hasdhedPassword = await bcrypt.hash(req.body.password, saltRounds);
+       email=req.body.email
+       password = hasdhedPassword;
+       userName = req.body.userName;
+       age=req.body.birthDay.day+"/"+req.body.birthDay.month+"/"+req.body.birthDay.year
+        User = new user_collection({
         _id: new Mongoose.Types.ObjectId(),
         biography:"Taking chances almost always makes for happy endings.",
         userName,
         password,
-        dialCode,
-        tel,
-        age
+        age,
+        email
       });
+    }
 
       var error = User.validateSync();
       if (error != undefined) {
@@ -41,17 +56,27 @@ exports.register = async (req, res) => {
           status: res.statusCode,
           state:false
         });
+        return 
       }
-      User.save().then((result) => {
+      if(result!=null){
         res.status(res.statusCode).json({
-          message: "user has been created",
-          result,
-          state:true
+          message: "user alredy exist",
+          status: res.statusCode,
+          state:false
         });
-      }).catch(e=>{
-        console.log(e.message)
-      });
-    }
+      }else{
+
+          User.save().then((result) => {
+            res.status(res.statusCode).json({
+              message: "user has been created",
+              result,
+              state:true
+            });
+          }).catch(e=>{
+            console.log(e.message)
+          });
+        }
+      
   } catch (err) {
     res.status(res.statusCode).json({
       message: err.message,
@@ -72,7 +97,6 @@ exports.loginFacebook = async (req, res) => {
             message: err.message,
             status: res.statusCode,
             state: false,
-
           });
         }else{
           //creation fo refreshToken
@@ -102,6 +126,7 @@ exports.loginFacebook = async (req, res) => {
     const User = new user_collection({
       _id: new Mongoose.Types.ObjectId(),
       biography:"Taking chances almost always makes for happy endings.",
+      userName:Math.random().toString(36).substring(7),
       idfacebook,
       userProfileImageUrl,
     });
@@ -144,7 +169,10 @@ exports.loginFacebook = async (req, res) => {
 
 }
 exports.login = async (req, res) => {
-  const userdata = await user_collection.findOne({ tel: req.body.tel }).exec();
+  console.log(req.body)
+  const userdata = await user_collection.findOne({$or:[{ tel: req.body.identity} ,{email:req.body.identity}]}).exec();
+  console.log(req.body)
+
   if (userdata != null) {
     if (await bcrypt.compare(req.body.password, userdata.password)) {
       const user_data = {
@@ -332,7 +360,7 @@ exports.getUserData=(req,res)=>{
     });
   })*/
   try{
-    user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},{$project: { userProfileImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
+    user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},{$project: { userProfileImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
       res.status(res.statusCode).json({
         data: result,
         status: res.statusCode,

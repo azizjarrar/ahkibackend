@@ -3,10 +3,11 @@ const jwt = require("jsonwebtoken");
 const Mongoose = require("mongoose");
 exports.getRefreshAccessToken=(req,res)=>{
     RefreshAccessToken = req.body.ref_token
-    /************************************************** */
-    /******************generate and return the new token and refresh token ******************* */
-    setNewRefreshAccessToken(RefreshAccessToken).then(data => {
+    /******************************************************************************************/
+    /******************generate and return the new token and refresh token ********************/
+    /******************************************************************************************/
 
+    setNewRefreshAccessToken(RefreshAccessToken).then(data => {
         res.status(res.statusCode).json({
             message: "new token",
             token: data.token,
