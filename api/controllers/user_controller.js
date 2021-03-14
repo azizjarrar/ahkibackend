@@ -12,6 +12,7 @@ exports.register = async (req, res) => {
   var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
   var result
   var User
+  /*test */
   try {
     if(req.body.tel!=undefined){
         tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
