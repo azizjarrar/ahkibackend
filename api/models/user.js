@@ -16,6 +16,7 @@ const User = mongoose.Schema({
     joindate:{type:Date,default:today},
     email:{type:String},
     userProfileImageUrl:{type:String},
+    verified:{type:String},
     following:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
     followers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
     userposts:[{type:mongoose.Schema.Types.ObjectId,ref:'Posts'}],

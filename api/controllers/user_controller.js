@@ -8,6 +8,7 @@ const fs = require("fs");
 
 ENV.config();
 exports.register = async (req, res) => {
+  console.log(req.body)
   var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
   var result
   var User
@@ -30,6 +31,7 @@ exports.register = async (req, res) => {
           dialCode,
           tel,
           age,
+          verified:false
         });
     }else{
        result  = await   user_collection.findOne({email:req.body.email}).exec()
@@ -45,7 +47,8 @@ exports.register = async (req, res) => {
         userName,
         password,
         age,
-        email
+        email,
+        verified:false,
       });
     }
 
@@ -65,7 +68,6 @@ exports.register = async (req, res) => {
           state:false
         });
       }else{
-
           User.save().then((result) => {
             res.status(res.statusCode).json({
               message: "user has been created",
@@ -169,15 +171,22 @@ exports.loginFacebook = async (req, res) => {
 
 }
 exports.login = async (req, res) => {
-  console.log(req.body)
   const userdata = await user_collection.findOne({$or:[{ tel: req.body.identity} ,{email:req.body.identity}]}).exec();
-  console.log(req.body)
-
   if (userdata != null) {
-    if (await bcrypt.compare(req.body.password, userdata.password)) {
+    console.log(userdata.verified)
+
+    if(userdata.verified=="false"){
+      res.status(res.statusCode).json({
+        message: "not verified",
+        status: res.statusCode,
+        verified:false,
+        state: false
+      });
+    } else if (await bcrypt.compare(req.body.password, userdata.password)) {
       const user_data = {
           tel: req.body.tel,
           _id: userdata._id,
+          verified:userdata.verified
       };
        await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
        async (err, token) => {
@@ -186,7 +195,6 @@ exports.login = async (req, res) => {
               message: err.message,
               status: res.statusCode,
               state: false,
-
             });
           }else{
           //creation fo refreshToken
@@ -225,6 +233,7 @@ exports.login = async (req, res) => {
 
     });
   }
+
 };
 exports.updateProfileInfo = (req, res) => {
   const userName = req.body.userName;
