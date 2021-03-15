@@ -5,6 +5,9 @@ const ENV = require("dotenv");
 const jwt = require("jsonwebtoken");
 const Mongoose = require("mongoose");
 const fs = require("fs");
+var nodemailer = require('nodemailer');
+var smtpTransport = require('nodemailer-smtp-transport');
+var handlebars = require('handlebars');
 
 ENV.config();
 exports.register = async (req, res) => {
@@ -69,7 +72,54 @@ exports.register = async (req, res) => {
           state:false
         });
       }else{
-          User.save().then((result) => {
+          User.save().then(async (result) => {
+            
+            if(req.body.email!=undefined){
+              let randomNumber=Math.floor((Math.random() * 89999) + 10000)
+              await user_collection.findOneAndUpdate({ email: User.email}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec()
+
+              var transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                  user: 'tripelbil@gmail.com',
+                  pass: '523307662023'
+                }
+              });
+              
+              var readHTMLFile = function(path, callback) {
+                fs.readFile(path, {encoding: 'utf-8'}, function (err, html) {
+                    if (err) {
+                        throw err;
+                        callback(err);
+                    }
+                    else {
+                        callback(null, html);
+                    }
+                });
+            };
+            
+              readHTMLFile('./mailTemplate.html', function(err, html) {
+                var template = handlebars.compile(html);
+                var replacements = {
+                     code: randomNumber
+                };
+                var htmlToSend = template(replacements);
+                var mailOptions = {
+                    from: 'my@email.com',
+                    to : 'azizjarrar@gmail.com',
+                    subject : 'test subject',
+                    html : htmlToSend
+                 };
+                 transporter.sendMail(mailOptions, function(error, info){
+                  if (error) {
+                    console.log(error);
+                  } else {
+                    console.log('Email sent: ' + info.response);
+                  }
+                });
+            });
+ 
+            }
             res.status(res.statusCode).json({
               message: "user has been created",
               result,
