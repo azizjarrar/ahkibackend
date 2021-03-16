@@ -1,5 +1,6 @@
 const user_collection = require("../models/user");
 const refreshAccessToken_collection = require('../models/refreshAccessToken') 
+
 const bcrypt = require("bcrypt");
 const ENV = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -11,7 +12,6 @@ var handlebars = require('handlebars');
 
 ENV.config();
 exports.register = async (req, res) => {
-  console.log(req.body)
   var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
   var result
   var User
@@ -20,13 +20,12 @@ exports.register = async (req, res) => {
     if(req.body.tel!=undefined){
         tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
         result  = await   user_collection.findOne({tel:tel}).exec()
-
         dialCode = req.body.dialCode
         saltRounds = await bcrypt.genSalt(10);
         hasdhedPassword = await bcrypt.hash(req.body.password, saltRounds);
         password = hasdhedPassword;
         userName = req.body.userName;
-        age=req.body.birthDay.day+"/"+req.body.birthDay.month+"/"+req.body.birthDay.year
+        age=req.body.birthDay
          User = new user_collection({
           _id: new Mongoose.Types.ObjectId(),
           biography:"Taking chances almost always makes for happy endings.",
@@ -44,8 +43,8 @@ exports.register = async (req, res) => {
        email=req.body.email
        password = hasdhedPassword;
        userName = req.body.userName;
-       age=req.body.birthDay.day+"/"+req.body.birthDay.month+"/"+req.body.birthDay.year
-        User = new user_collection({
+       age=req.body.birthDay
+       User = new user_collection({
         _id: new Mongoose.Types.ObjectId(),
         biography:"Taking chances almost always makes for happy endings.",
         userName,
@@ -55,7 +54,6 @@ exports.register = async (req, res) => {
         verified:false,
       });
     }
-
       var error = User.validateSync();
       if (error != undefined) {
         res.status(res.statusCode).json({
@@ -73,56 +71,21 @@ exports.register = async (req, res) => {
         });
       }else{
           User.save().then(async (result) => {
-            
+            let userData
             if(req.body.email!=undefined){
               let randomNumber=Math.floor((Math.random() * 89999) + 10000)
-              await user_collection.findOneAndUpdate({ email: User.email}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec()
-
-              var transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                  user: 'tripelbil@gmail.com',
-                  pass: '523307662023'
-                }
-              });
-              
-              var readHTMLFile = function(path, callback) {
-                fs.readFile(path, {encoding: 'utf-8'}, function (err, html) {
-                    if (err) {
-                        throw err;
-                        callback(err);
-                    }
-                    else {
-                        callback(null, html);
-                    }
-                });
-            };
-            
-              readHTMLFile('./mailTemplate.html', function(err, html) {
-                var template = handlebars.compile(html);
-                var replacements = {
-                     code: randomNumber
-                };
-                var htmlToSend = template(replacements);
-                var mailOptions = {
-                    from: 'my@email.com',
-                    to : 'azizjarrar@gmail.com',
-                    subject : 'test subject',
-                    html : htmlToSend
-                 };
-                 transporter.sendMail(mailOptions, function(error, info){
-                  if (error) {
-                    console.log(error);
-                  } else {
-                    console.log('Email sent: ' + info.response);
-                  }
-                });
-            });
+               userData= await user_collection.findOneAndUpdate({ email: User.email}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec()
+              sendCode(randomNumber,"email",User.email,"")
  
+            }else{
+              let randomNumber=Math.floor((Math.random() * 89999) + 10000)
+              userData= await user_collection.findOneAndUpdate({ tel: User.tel}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec()
+             //sendCode(randomNumber,"tel","",req.body.tel)
             }
             res.status(res.statusCode).json({
               message: "user has been created",
               result,
+              userid:userData._id,
               state:true
             });
           }).catch(e=>{
@@ -136,6 +99,7 @@ exports.register = async (req, res) => {
     });
   }
 };
+/*
 exports.loginFacebook = async (req, res) => {
 
   const userdata = await user_collection.findOne({idfacebook:req.body.id}).exec();
@@ -143,7 +107,7 @@ exports.loginFacebook = async (req, res) => {
     const user_data = {
       _id: userdata._id,
   };
-     jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
+     jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '30m' },
       async (err, token) => {
         if(err){
           res.status(res.statusCode).json({
@@ -155,6 +119,7 @@ exports.loginFacebook = async (req, res) => {
           //creation fo refreshToken
           const ref_token = await jwt.sign({ user_auth: user_data }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
           /***Create new refToken */
+          /*
            const refreshAccessToken= new refreshAccessToken_collection({
               _id: new Mongoose.Types.ObjectId(),
               ref_token:ref_token,
@@ -187,7 +152,7 @@ exports.loginFacebook = async (req, res) => {
       const newUserInfo= {
         _id: User._id,
     };
-       jwt.sign({ user_auth: newUserInfo },process.env.secret_key_token,{ expiresIn: '10s' },
+       jwt.sign({ user_auth: newUserInfo },process.env.secret_key_token,{ expiresIn: '30m' },
       async (err, token) => {
         if(err){
           res.status(res.statusCode).json({
@@ -199,7 +164,7 @@ exports.loginFacebook = async (req, res) => {
           //creation fo refreshToken
           const ref_token = await jwt.sign({ user_auth: newUserInfo }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
           /***Create new refToken */
-           const refreshAccessToken= new refreshAccessToken_collection({
+           /*const refreshAccessToken= new refreshAccessToken_collection({
               _id: new Mongoose.Types.ObjectId(),
               ref_token:ref_token,
               userid: newUserInfo._id,
@@ -221,53 +186,55 @@ exports.loginFacebook = async (req, res) => {
   }
 
 }
+*/
 exports.login = async (req, res) => {
   const userdata = await user_collection.findOne({$or:[{ tel: req.body.identity} ,{email:req.body.identity}]}).exec();
   if (userdata != null) {
-    console.log(userdata.verified)
 
+  if (await bcrypt.compare(req.body.password, userdata.password)) {
     if(userdata.verified=="false"){
       res.status(res.statusCode).json({
         message: "not verified",
+        userid: userdata._id,
         status: res.statusCode,
         verified:false,
-        state: false
       });
-    } else if (await bcrypt.compare(req.body.password, userdata.password)) {
+    }else{
       const user_data = {
-          tel: req.body.tel,
-          _id: userdata._id,
-          verified:userdata.verified
-      };
-       await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '10s' },
-       async (err, token) => {
-          if(err){
-            res.status(res.statusCode).json({
-              message: err.message,
-              status: res.statusCode,
-              state: false,
-            });
-          }else{
-          //creation fo refreshToken
-          const ref_token = await jwt.sign({ user_auth: user_data }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
-          /***Create new refToken */
-           const refreshAccessToken= new refreshAccessToken_collection({
-              _id: new Mongoose.Types.ObjectId(),
-              ref_token:ref_token,
-              userid: user_data._id,
-          })
-          refreshAccessToken.save().then()
-            res.status(res.statusCode).json({
-              message: "login succeeded",
-              token: token,
-              ref_token:ref_token,
-              state: true,
-            });
-          }
+        tel: req.body.tel,
+        _id: userdata._id,
+        verified:userdata.verified
+    };
+     await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '1h' },
+     async (err, token) => {
+        if(err){
+          res.status(res.statusCode).json({
+            message: err.message,
+            status: res.statusCode,
+            state: false,
+          });
+        }else{
+        //creation fo refreshToken
+        const ref_token = await jwt.sign({ user_auth: user_data }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
+        /***Create new refToken */
+         const refreshAccessToken= new refreshAccessToken_collection({
+            _id: new Mongoose.Types.ObjectId(),
+            ref_token:ref_token,
+            userid: user_data._id,
+        })
+        refreshAccessToken.save().then()
+          res.status(res.statusCode).json({
+            message: "login succeeded",
+            token: token,
+            ref_token:ref_token,
+            state: true,
+          });
+        }
 
-        },
-        
-      );
+      },
+      
+    );
+    }
     } else {
       res.status(res.statusCode).json({
         message: "password incorrect",
@@ -290,23 +257,17 @@ exports.updateProfileInfo = (req, res) => {
   const userName = req.body.userName;
   const firstname = req.body.firstname;
   const lastname = req.body.lastname;
-  const tel = req.body.tel;
-  const dialCode = req.body.dialCode;
-  const email = req.body.email;
   const age = req.body.age;
-  const biography= req.body.tel
+  const biography= req.body.biography
   let params = {
     userName,
     firstname,
     lastname,
-    tel,
-    dialCode,
-    email,
     biography,
     age,
   };
   for (let prop in params) if (!params[prop]) delete params[prop];
-  user_collection.findOneAndUpdate({ _id: req.verified.user_auth._id}, { $set: params }, { new: true }).select('userName firstname lastname tel dialCode email biography age')
+  user_collection.findOneAndUpdate({ _id: req.verified.user_auth._id}, { $set: params }, { new: true }).select('userName firstname lastname biography age')
     .exec((err, item) => {
       if(err){
         res.status(res.statusCode).json({
@@ -355,31 +316,38 @@ exports.updatePics = async (req, res) => {
 exports.changePassword=async (req,res)=>{
   let oldpasswor=req.body.oldPassword;
   let newPassword=req.body.newPassword
-  if(oldpasswor==undefined || newPassword==undefined){
+  if(newPassword.length<8){
     res.status(res.statusCode).json({
-      message: "set Password",
+      message: "password is less then 8 char",
       state: false,
     });
   }else{
-    const userdata = await user_collection.findOne({  _id: req.verified.user_auth._id}).exec();
-    const saltRounds = await bcrypt.genSalt(10);
-    const hasdhedPassword = await bcrypt.hash(newPassword, saltRounds);
-  
-    if (await bcrypt.compare(oldpasswor, userdata.password)) {
-      user_collection.findOneAndUpdate({  _id: req.verified.user_auth._id},{$set :{password:hasdhedPassword}}).exec().then(()=>{
-        res.status(res.statusCode).json({
-          message: "password has been changed",
-          state: true,
-        });
-      })
-    } else {
+    if(oldpasswor==undefined || newPassword==undefined){
       res.status(res.statusCode).json({
-        message: "password incorrect",
+        message: "set Password",
         state: false,
       });
+    }else{
+      const userdata = await user_collection.findOne({  _id: req.verified.user_auth._id}).exec();
+      const saltRounds = await bcrypt.genSalt(10);
+      const hasdhedPassword = await bcrypt.hash(newPassword, saltRounds);
+    
+      if (await bcrypt.compare(oldpasswor, userdata.password)) {
+        user_collection.findOneAndUpdate({  _id: req.verified.user_auth._id},{$set :{password:hasdhedPassword}}).exec().then(()=>{
+          res.status(res.statusCode).json({
+            message: "password has been changed",
+            state: true,
+          });
+        })
+      } else {
+        res.status(res.statusCode).json({
+          message: "password incorrect",
+          passwordincorrect:true,
+          state: false,
+        });
+      }
     }
-  }
-  
+  } 
 }
 exports.updatePhoneNumber=async (req,res)=>{
   const tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
@@ -420,7 +388,7 @@ exports.getUserData=(req,res)=>{
     });
   })*/
   try{
-    user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},{$project: { userProfileImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
+    user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},{$project: { userProfileImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
       res.status(res.statusCode).json({
         data: result,
         status: res.statusCode,
@@ -434,7 +402,6 @@ exports.getUserData=(req,res)=>{
   }
 }
 exports.getotherUsersData=async (req,res)=>{
-
     try{
   user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id) }},{$project: { userProfileImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
     res.status(res.statusCode).json({
@@ -464,4 +431,116 @@ exports.changeprofileimage=async (req,res)=>{
     });
   })
 
+}
+
+exports.activeAccount = async (req, res) => {
+  user_collection.findOneAndUpdate( {_id: Mongoose.Types.ObjectId(req.body.userid),verifiedCode:req.body.verificationCode,verified:false},{$set:{verified:true}}).exec().then(async result=>{
+    if(result==null){
+      res.status(res.statusCode).json({
+        message: "invalid  code",
+        state: false,
+      });
+    }else{
+      const user_data = {
+        _id: result._id,
+    };
+      await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '1h' },
+      async (err, token) => {
+         if(err){
+           res.status(res.statusCode).json({
+             message: err.message,
+             status: res.statusCode,
+             state: false,
+           });
+         }else{
+         //creation fo refreshToken
+         const ref_token = await jwt.sign({ user_auth: user_data }, process.env.secret_key_refrech_token,{ expiresIn: '365d'} )
+         /***Create new refToken */
+          const refreshAccessToken= new refreshAccessToken_collection({
+             _id: new Mongoose.Types.ObjectId(),
+             ref_token:ref_token,
+             userid: user_data._id,
+         })
+         refreshAccessToken.save().then()
+           res.status(res.statusCode).json({
+             message: "login succeeded",
+             token: token,
+             ref_token:ref_token,
+             state: true,
+           });
+         }
+  
+       },
+     );
+    }
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+    });
+  })
+}
+exports.reSendVerificationCode = async (req, res) => {
+
+  let randomNumber=Math.floor((Math.random() * 89999) + 10000)
+  userData= await user_collection.findOneAndUpdate({ _id: Mongoose.Types.ObjectId(req.body.userid)}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec().then(result=>{
+    res.status(res.statusCode).json({
+      message: "code teb3ath",
+      status: res.statusCode,
+    });
+
+    sendCode(randomNumber,"email",result.email,"")
+
+  })
+  
+}
+
+/*****************************************/
+const sendCode=(codeNumber,telOrEmail,email="",tel="")=>{
+  
+  if(telOrEmail="email"){
+    var transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'tripelbil@gmail.com',
+        pass: '523307662023'
+      }
+    });
+    
+    var readHTMLFile = function(path, callback) {
+      fs.readFile(path, {encoding: 'utf-8'}, function (err, html) {
+          if (err) {
+              throw err;
+              callback(err);
+          }
+          else {
+              callback(null, html);
+          }
+      });
+  };
+    readHTMLFile('./mailTemplate.html', function(err, html) {
+      var template = handlebars.compile(html);
+      var replacements = {
+           code: codeNumber
+      };
+      var htmlToSend = template(replacements);
+      var mailOptions = {
+          from: 'my@email.com',
+          to : email,
+          subject : 'test subject',
+          html : htmlToSend
+       };
+       transporter.sendMail(mailOptions, function(error, info){
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+  });
+  }
+
+}
+exports.removeToken=(req,res)=>{
+  refreshAccessToken_collection.findOneAndRemove({userid:Mongoose.Types.ObjectId(req.body.userid)}).exec()
 }

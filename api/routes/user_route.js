@@ -57,10 +57,15 @@ function checkUploadPath(req, res, next) {
 /*********************************************************************************/
 /*********************************************************************************/
 router.post('/login', user_controler.login)
-router.post('/loginfacebook', user_controler.loginFacebook)
+//router.post('/loginfacebook', user_controler.loginFacebook)
 router.post('/register', user_controler.register)
 router.get('/GetUserData',check_auth, user_controler.getUserData)
 router.post('/changeprofileimage',check_auth,checkUploadPath,uploadMulter.single('file'), user_controler.changeprofileimage)
 router.get('/getotherUsersData/:id', user_controler.getotherUsersData)
+router.post('/activeAccount',user_controler.activeAccount)
+router.post('/reSendVerificationCode',user_controler.reSendVerificationCode)
+router.post('/removeToken',user_controler.removeToken)
+router.post('/updateProfileInfo',check_auth,user_controler.updateProfileInfo)
+router.post('/changePassword',check_auth,user_controler.changePassword)
 
 module.exports = router
