@@ -22,6 +22,8 @@ const User = mongoose.Schema({
     followers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
     userposts:[{type:mongoose.Schema.Types.ObjectId,ref:'Posts'}],
     likes:[{type:mongoose.Schema.Types.ObjectId,ref:'Posts'}],
-    notification:[{type:mongoose.Schema.Types.ObjectId,ref:'notification'}]
+    notification:[{type:mongoose.Schema.Types.ObjectId,ref:'notification'}],
+    resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}}
 })
 module.exports=mongoose.model('User',User)
+

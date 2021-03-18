@@ -67,5 +67,8 @@ router.post('/reSendVerificationCode',user_controler.reSendVerificationCode)
 router.post('/removeToken',user_controler.removeToken)
 router.post('/updateProfileInfo',check_auth,user_controler.updateProfileInfo)
 router.post('/changePassword',check_auth,user_controler.changePassword)
+router.post('/searchAccountToForgetPassword',user_controler.searchAccountToForgetPassword)
+router.post('/resetPassword',user_controler.resetPassword)//hedhi tab3ethlk il code
+router.post('/SetNewPassword',user_controler.SetNewPassword)//hedhi tbadek mdp
 
 module.exports = router

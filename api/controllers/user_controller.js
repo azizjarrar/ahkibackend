@@ -544,3 +544,106 @@ const sendCode=(codeNumber,telOrEmail,email="",tel="")=>{
 exports.removeToken=(req,res)=>{
   refreshAccessToken_collection.findOneAndRemove({userid:Mongoose.Types.ObjectId(req.body.userid)}).exec()
 }
+exports.searchAccountToForgetPassword=(req,res)=>{
+  telOrEmail=req.body.identity;
+  if(telOrEmail!=undefined && telOrEmail.length>0){
+    user_collection.findOne({$or:[ {email:telOrEmail},{tel:telOrEmail}]}).select("userName userProfileImageUrl email tel").exec().then(result=>{
+      if(result==null){
+        res.status(res.statusCode).json({
+          message: "user Not Found",
+          status: res.statusCode,
+          state:false
+        });
+      }else{
+        res.status(res.statusCode).json({
+          message: "user Found",
+          data:result,
+          status: res.statusCode,
+          state:true
+        });
+      }
+    })
+  }else{
+    res.status(res.statusCode).json({
+      message: "hout user",
+      status: res.statusCode,
+      state:false
+    });
+  }
+
+}
+exports.resetPassword=(req,res)=>{
+  if(req.body.type=="email"){
+    let randomNumber=Math.floor((Math.random() * 89999) + 10000)
+
+    user_collection.findOneAndUpdate({email:req.body.email},{$set:{resetPassword:{ExpiresIn:Date.now(),code:randomNumber}}}).exec().then(result=>{
+      if(result!=undefined){
+        sendCode(randomNumber,"email",result.email,"")
+        res.status(res.statusCode).json({
+          message: "code teb3ath",
+          data:randomNumber,
+          status: res.statusCode,
+          state:true
+        });
+      }else{
+        res.status(res.statusCode).json({
+          message: "user Not Found",
+          status: res.statusCode,
+          state:false
+        });
+      }
+    })
+  }else{
+    //telephone
+    user_collection.findOneAndUpdate({tel:req.body.tel}).exec().then(result=>{
+        if(result!=undefined){
+        
+        }else{
+          res.status(res.statusCode).json({
+            message: "user Not Found",
+            status: res.statusCode,
+            state:false
+          });
+        }
+    })
+  }
+  
+}
+exports.SetNewPassword=(req,res)=>{
+;
+  if(req.body.type=="email"){
+    user_collection.findOne({email:req.body.identity}).exec().then(async result=>{
+      if(result.resetPassword.code!=req.body.code){
+        res.status(res.statusCode).json({
+          message: "Code raw 8alet",
+          status: res.statusCode,
+          typeError:"incorectCode",
+          state:false
+        });
+      }else if(result.resetPassword.ExpiresIn+(60*60)<Date.now()){
+        console.log(result.resetPassword.ExpiresIn-0+(1000*60*60),Date.now())
+        res.status(res.statusCode).json({
+          message: "Code raw ofe wa9tou",
+          typeError:"codeInvalid",
+          status: res.statusCode,
+          state:false
+        });
+      }else{
+        saltRounds = await bcrypt.genSalt(10);
+        hasdhedPassword = await bcrypt.hash(req.body.newPassword, saltRounds)
+        user_collection.findOneAndUpdate({email:req.body.identity},{$set:{password:hasdhedPassword}}).exec().then(()=>{
+          res.status(res.statusCode).json({
+            message: "password was updated",
+            status: res.statusCode,
+            typeError:"done",
+            state:false
+          });
+        })
+      }
+    })
+  }else{
+    //telephone
+
+  }
+
+}
