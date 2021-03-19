@@ -70,5 +70,7 @@ router.post('/changePassword',check_auth,user_controler.changePassword)
 router.post('/searchAccountToForgetPassword',user_controler.searchAccountToForgetPassword)
 router.post('/resetPassword',user_controler.resetPassword)//hedhi tab3ethlk il code
 router.post('/SetNewPassword',user_controler.SetNewPassword)//hedhi tbadek mdp
+router.post('/updateEmailSendCode',check_auth,user_controler.updateEmailSendCode)//hedhi li tab3ath code  lil email jdid li theb tbadlou
+router.post('/updateEmail',check_auth,user_controler.updateEmail)//hedhi li tbadel email t3adilha code
 
 module.exports = router

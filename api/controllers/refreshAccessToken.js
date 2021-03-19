@@ -38,7 +38,7 @@ setNewRefreshAccessToken=async (RefreshAccessToken)=>{
         
                 }
                 /***create accces token and refresh token */
-                token = jwt.sign({ user_auth: logged_user }, process.env.secret_key_token, { expiresIn: "5s" })
+                token = jwt.sign({ user_auth: logged_user }, process.env.secret_key_token, { expiresIn: "1h" })
                 ref_token = jwt.sign({ user_auth: logged_user }, process.env.secret_key_refrech_token)
                 /***********************delete old token****** */
               refreshAccessToken_collection.findOneAndRemove({ ref_token:RefreshAccessToken }).exec().then((result)=>{

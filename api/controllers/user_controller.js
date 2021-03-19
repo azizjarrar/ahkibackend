@@ -1,21 +1,19 @@
 const user_collection = require("../models/user");
 const refreshAccessToken_collection = require('../models/refreshAccessToken') 
-
 const bcrypt = require("bcrypt");
 const ENV = require("dotenv");
 const jwt = require("jsonwebtoken");
 const Mongoose = require("mongoose");
+var handlebars = require('handlebars');
 const fs = require("fs");
 var nodemailer = require('nodemailer');
-var smtpTransport = require('nodemailer-smtp-transport');
-var handlebars = require('handlebars');
-
 ENV.config();
+
 exports.register = async (req, res) => {
   var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
   var result
   var User
-  /*test */
+  /*test if user logged with telephone or email*/
   try {
     if(req.body.tel!=undefined){
         tel = req.body.tel.slice(req.body.dialCode.length,req.body.tel.length);
@@ -72,6 +70,7 @@ exports.register = async (req, res) => {
       }else{
           User.save().then(async (result) => {
             let userData
+            //kenou bi tel connected aba3hlou msg  lil tel ken bil eamil aba3thlo code lil email
             if(req.body.email!=undefined){
               let randomNumber=Math.floor((Math.random() * 89999) + 10000)
                userData= await user_collection.findOneAndUpdate({ email: User.email}, { $set: {verifiedCode:randomNumber} }, { new: true }).exec()
@@ -544,6 +543,7 @@ const sendCode=(codeNumber,telOrEmail,email="",tel="")=>{
 exports.removeToken=(req,res)=>{
   refreshAccessToken_collection.findOneAndRemove({userid:Mongoose.Types.ObjectId(req.body.userid)}).exec()
 }
+//hedhi awel etapge fi forget password tchoud l3abed mawjoud wala le
 exports.searchAccountToForgetPassword=(req,res)=>{
   telOrEmail=req.body.identity;
   if(telOrEmail!=undefined && telOrEmail.length>0){
@@ -572,6 +572,7 @@ exports.searchAccountToForgetPassword=(req,res)=>{
   }
 
 }
+//hedhi theni etape fi tarji3 il mdp taba3th code li chi ged bih pass jdid
 exports.resetPassword=(req,res)=>{
   if(req.body.type=="email"){
     let randomNumber=Math.floor((Math.random() * 89999) + 10000)
@@ -609,6 +610,7 @@ exports.resetPassword=(req,res)=>{
   }
   
 }
+//hedhi e5er marhla fi tarji3 mdp t3adi il code ou mdp jdid ou khw yetbadel pas
 exports.SetNewPassword=(req,res)=>{
 ;
   if(req.body.type=="email"){
@@ -621,7 +623,6 @@ exports.SetNewPassword=(req,res)=>{
           state:false
         });
       }else if(result.resetPassword.ExpiresIn+(60*60)<Date.now()){
-        console.log(result.resetPassword.ExpiresIn-0+(1000*60*60),Date.now())
         res.status(res.statusCode).json({
           message: "Code raw ofe wa9tou",
           typeError:"codeInvalid",
@@ -646,4 +647,74 @@ exports.SetNewPassword=(req,res)=>{
 
   }
 
+}
+exports.updateEmailSendCode=(req,res)=>{
+  if(req.body.email!=undefined && req.body.email.length>1){
+    let randomNumber=Math.floor((Math.random() * 89999) + 10000)
+    user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$set:{changeEmail:{ExpiresIn:Date.now(),newEmail:req.body.email,code:randomNumber}}}, { new: true }).exec().then(async result=>{
+      if(result!=null){
+        sendCode(randomNumber,"email",result.email,"")
+        res.status(res.statusCode).json({
+          message: "code raw teb3ath",
+          status: res.statusCode,
+          state:false
+        });
+      }else{
+        res.status(res.statusCode).json({
+          message: "user Not Found",
+          status: res.statusCode,
+          state:false
+        });
+      }
+    })
+  }else{
+    res.status(res.statusCode).json({
+      message: "user Not Found",
+      status: res.statusCode,
+      state:false
+    });
+  }
+}
+exports.updateEmail=(req,res)=>{
+    user_collection.findOne({_id:req.verified.user_auth._id}).exec().then(async result=>{
+      if(result.changeEmail.code!=req.body.code){
+        res.status(res.statusCode).json({
+          message: "Code raw 8alet",
+          status: res.statusCode,
+          typeError:"incorectCode",
+          state:false
+        });
+      }else if(result.changeEmail.ExpiresIn+(60*60)<Date.now()){
+        res.status(res.statusCode).json({
+          message: "Code raw ofe wa9tou",
+          typeError:"codeInvalid",
+          status: res.statusCode,
+          state:false
+        });
+      }else{
+        user_collection.findOneAndUpdate({_id:req.verified.user_auth._id,"changeEmail.newEmail":req.body.email},{$set:{email:req.body.email}}).exec().then((result)=>{
+          if(result!=null){
+            res.status(res.statusCode).json({
+              message: "email was updated",
+              status: res.statusCode,
+              typeError:"done",
+              state:false
+            });
+          }else{
+            res.status(res.statusCode).json({
+              message: "mahouch hedha il email li hatitou mi lowel",
+              status: res.statusCode,
+              state:false
+            });
+          }
+
+        }).catch(error=>{
+          res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+            state:false
+          });
+        })
+      }
+    })
 }
