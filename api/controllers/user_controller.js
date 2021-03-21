@@ -718,3 +718,182 @@ exports.updateEmail=(req,res)=>{
       }
     })
 }
+
+exports.checkIffollow=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id,following:req.body.theOtherPersonId}).select("following").exec().then(async result=>{
+    if(result==null){
+      res.status(res.statusCode).json({
+        status: res.statusCode,
+        following:false,
+      }); 
+    }else{
+      res.status(res.statusCode).json({
+        status: res.statusCode,
+        following:true,
+      }); 
+    }
+ 
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
+exports.followUser=(req,res)=>{
+  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$push:{following:req.body.userToFollow}}).exec().then(async result=>{
+    user_collection.findOneAndUpdate({_id:req.body.userToFollow},{$push:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
+      res.status(res.statusCode).json({
+        message: "saye amaltou follow",
+        status: res.statusCode,
+        state:true
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
+exports.unfollowUser=(req,res)=>{
+  console.log(req.body)
+  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{following:req.body.userToUnfollow}}).exec().then(async result=>{
+    user_collection.findOneAndUpdate({_id:req.body.userToUnfollow},{$pull:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
+      res.status(res.statusCode).json({
+        message: "saye amaltou follow",
+        status: res.statusCode,
+        state:true
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
+exports.getFollowing=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id}).populate("following").exec().then(async result=>{
+    res.status(res.statusCode).json({
+      data:result,
+      message: "ge follwing ",
+      status: res.statusCode,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+
+}
+exports.getFollowers=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id}).select("followers").populate({path:"followers",select:'userName userProfileImageUrl'}).exec().then(async result=>{
+    res.status(res.statusCode).json({
+      data:result,
+      message: "get Followers ",
+      status: res.statusCode,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+
+}
+exports.getrandomUsers=(req,res)=>{
+  user_collection.aggregate([ { $sample: { size: 6 } },{$project: { userName:1,userProfileImageUrl:1}} ]).exec().then(result=>{
+  res.status(res.statusCode).json({
+    data:result,
+    message: "random users ",
+    status: res.statusCode,
+    state:true
+  });
+ }).catch(error=>{
+  res.status(res.statusCode).json({
+    message: error.message,
+    status: res.statusCode,
+    state:false
+  });
+ })
+}
+exports.SearchUserByUserName=(req,res)=>{
+  let searchData=req.body.searchUserName
+  if(req.body.searchUserName.length>0){
+    user_collection.find({ userName: { $regex: `.*${searchData}.*`}}).select('userName userProfileImageUrl').exec().then(async result=>{
+      res.status(res.statusCode).json({
+        data:result,
+        message: "search users ",
+        status: res.statusCode,
+        state:true
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }else{
+    res.status(res.statusCode).json({
+      message: "ekteb haja",
+      status: res.statusCode,
+      state:false
+    });
+  }
+
+}
+exports.getFollowersOfUser=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id}).select("followers").populate({path:"followers",select:'userName userProfileImageUrl'}).exec().then(async result=>{
+    res.status(res.statusCode).json({
+      data:result,
+      message: "get Followers ",
+      status: res.statusCode,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
+exports.getFollowingOfUser=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id}).select("following").populate({path:"following",select:'userName userProfileImageUrl'}).exec().then(async result=>{
+
+    res.status(res.statusCode).json({
+      data:result,
+      message: "get following ",
+      status: res.statusCode,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}

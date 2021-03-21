@@ -26,5 +26,10 @@ const User = mongoose.Schema({
     resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}},
     changeEmail:{ExpiresIn:{Type:Date},newEmail:{Type:String},code:{Type:String}}
 })
+User.index({ userName: "text"}); // schema level
+User.on('index', error => {
+    // "_id index cannot be sparse"
+    console.log(error.message);
+  });
 module.exports=mongoose.model('User',User)
 

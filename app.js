@@ -6,11 +6,11 @@ const refreshAccessToken_route = require('./api/routes/refreshAccessToken')
 const app = express()
 const morgan = require('morgan')
 
-
 mongoose.connect(
   'mongodb://localhost:27017/ahki',
   { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true },
   async (err, cl) => {
+
     if (err) {
       console.log('error de connection=' + err)
       throw err
