@@ -204,7 +204,7 @@ exports.login = async (req, res) => {
         _id: userdata._id,
         verified:userdata.verified
     };
-     await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '1h' },
+     await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '86400s' },
      async (err, token) => {
         if(err){
           res.status(res.statusCode).json({
@@ -443,7 +443,7 @@ exports.activeAccount = async (req, res) => {
       const user_data = {
         _id: result._id,
     };
-      await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '1h' },
+      await jwt.sign({ user_auth: user_data },process.env.secret_key_token,{ expiresIn: '86400s' },
       async (err, token) => {
          if(err){
            res.status(res.statusCode).json({
@@ -541,6 +541,7 @@ const sendCode=(codeNumber,telOrEmail,email="",tel="")=>{
 
 }
 exports.removeToken=(req,res)=>{
+  
   refreshAccessToken_collection.findOneAndRemove({userid:Mongoose.Types.ObjectId(req.body.userid)}).exec()
 }
 //hedhi awel etapge fi forget password tchoud l3abed mawjoud wala le
