@@ -32,7 +32,7 @@ exports.register = async (req, res) => {
           dialCode,
           tel,
           age,
-          verified:false
+          verified:true
         });
     }else{
        result  = await   user_collection.findOne({email:req.body.email}).exec()
@@ -49,7 +49,7 @@ exports.register = async (req, res) => {
         password,
         age,
         email,
-        verified:false,
+        verified:true,
       });
     }
       var error = User.validateSync();
