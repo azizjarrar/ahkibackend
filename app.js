@@ -2,9 +2,10 @@ const express = require('express')
 const mongoose = require('mongoose')
 const bodyparser = require('body-parser')
 const user_route = require('./api/routes/user_route')
-const postNrmlTopic_controller_route=require('./api/routes/postNrmlTopic_controller_route')
+const post_controller_route=require('./api/routes/post_controller_route')
 const refreshAccessToken_route = require('./api/routes/refreshAccessToken')
 const comments_controller_route = require('./api/routes/comments_route')
+const like_controller_route=require('./api/routes/likes')
 const app = express()
 const morgan = require('morgan')
 
@@ -39,8 +40,10 @@ mongoose.connect(
     app.use('/uploads',express.static('./uploads'))
     app.use('/user', user_route)
     app.use('/token', refreshAccessToken_route)
-    app.use('/postnrmltopic', postNrmlTopic_controller_route)
+    app.use('/postnrmltopic', post_controller_route)
     app.use('/comments', comments_controller_route)
+    app.use('/like', like_controller_route)
+
     /***************for sending pics in random chat*********************/
 
     app.use((req, res) => {

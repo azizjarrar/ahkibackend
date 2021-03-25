@@ -766,7 +766,6 @@ exports.followUser=(req,res)=>{
   })
 }
 exports.unfollowUser=(req,res)=>{
-  console.log(req.body)
   user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{following:req.body.userToUnfollow}}).exec().then(async result=>{
     user_collection.findOneAndUpdate({_id:req.body.userToUnfollow},{$pull:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
       res.status(res.statusCode).json({
@@ -824,7 +823,8 @@ exports.getFollowers=(req,res)=>{
 
 }
 exports.getrandomUsers=(req,res)=>{
-  user_collection.aggregate([ { $sample: { size: 6 } },{$project: { userName:1,userProfileImageUrl:1}} ]).exec().then(result=>{
+  console.log("gzeg")
+  user_collection.aggregate([{ $sample: { size: 6 } },{$project: { userName:1,userProfileImageUrl:1}} ]).exec().then(result=>{
   res.status(res.statusCode).json({
     data:result,
     message: "random users ",
@@ -866,7 +866,7 @@ exports.SearchUserByUserName=(req,res)=>{
 
 }
 exports.getFollowersOfUser=(req,res)=>{
-  user_collection.findOne({_id:req.verified.user_auth._id}).select("followers").populate({path:"followers",select:'userName userProfileImageUrl'}).exec().then(async result=>{
+  user_collection.findOne({_id:req.body.id}).select("followers").populate({path:"followers",select:'userName userProfileImageUrl'}).exec().then(async result=>{
     res.status(res.statusCode).json({
       data:result,
       message: "get Followers ",
@@ -882,7 +882,7 @@ exports.getFollowersOfUser=(req,res)=>{
   })
 }
 exports.getFollowingOfUser=(req,res)=>{
-  user_collection.findOne({_id:req.verified.user_auth._id}).select("following").populate({path:"following",select:'userName userProfileImageUrl'}).exec().then(async result=>{
+  user_collection.findOne({_id:req.body.id}).select("following").populate({path:"following",select:'userName userProfileImageUrl'}).exec().then(async result=>{
 
     res.status(res.statusCode).json({
       data:result,

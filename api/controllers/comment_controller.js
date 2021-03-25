@@ -1,4 +1,4 @@
-const postNrmlTopic_collection = require("../models/postNrmlTopic");
+const post_collection = require("../models/post");
 const user_collection = require('../models/user')
 const comments_collection = require('../models/comments')
 const Mongoose = require("mongoose");
@@ -21,10 +21,10 @@ exports.addComment=(req,res)=>{
         });
         return 
       }
-      comment.save().then(async (result) => {
-        postNrmlTopic_collection.findOneAndUpdate({_id:req.body.postid},{$push:{comments:comment._id}}).exec().then(result=>{
+      comment.save().then(async (commentData) => {
+        post_collection.findOneAndUpdate({_id:req.body.postid},{$push:{comments:comment._id}}).exec().then(result=>{
             res.status(res.statusCode).json({
-                data: result,
+                data: commentData,
                 status: res.statusCode,
                 state:false
               });
@@ -44,8 +44,8 @@ exports.addComment=(req,res)=>{
         )
     }
 exports.getComments=(req,res)=>{
-    postNrmlTopic_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName userProfileImageUrl'},options:{ sort: {date: -1} }}).select("comments").exec().then(result=>{
-        res.status(res.statusCode).json({
+    post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName userProfileImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
+      res.status(res.statusCode).json({ 
             data: result.comments,
             message: "post comments",
             status: res.statusCode,

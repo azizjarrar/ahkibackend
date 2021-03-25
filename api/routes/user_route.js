@@ -77,11 +77,11 @@ router.post('/followUser',check_auth,user_controler.followUser)//tchouf thot btn
 router.post('/unfollowUser',check_auth,user_controler.unfollowUser)//tchouf thot btn follow wala unfofllow
 router.post('/getFollowing',check_auth,user_controler.getFollowing)//tchouf thot btn follow wala unfofllow
 router.post('/getFollowers',check_auth,user_controler.getFollowers)//tchouf thot btn follow wala unfofllow
-router.post('/getrandomUsers',user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
+router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
 router.post('/SearchUserByUserName',user_controler.SearchUserByUserName)//tchouf thot btn follow wala unfofllow
 router.post('/getFollowersOfUser',check_auth,user_controler.getFollowersOfUser)//tchouf thot btn follow wala unfofllow
 router.post('/getFollowingOfUser',check_auth,user_controler.getFollowingOfUser)//tchouf thot btn follow wala unfofllow
-router.get('/getrandomUsers',user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
+router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
 
 
 

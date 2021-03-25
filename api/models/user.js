@@ -20,9 +20,9 @@ const User = mongoose.Schema({
     verifiedCode:{type:String},
     following:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
     followers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
-    nrmlTopic:[{type:mongoose.Schema.Types.ObjectId,ref:'NrmlTopic'}],
+    post:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
     todayTopic:[{type:mongoose.Schema.Types.ObjectId,ref:'TodayTopic'}],
-    likes:[{type:mongoose.Schema.Types.ObjectId,ref:'Posts'}],
+    likes:[{type:mongoose.Schema.Types.ObjectId,ref:'NrmlTopic'}],
     notification:[{type:mongoose.Schema.Types.ObjectId,ref:'notification'}],
     resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}},
     changeEmail:{ExpiresIn:{Type:Date},newEmail:{Type:String},code:{Type:String}}
