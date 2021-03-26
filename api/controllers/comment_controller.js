@@ -11,7 +11,6 @@ exports.addComment=(req,res)=>{
         likes:[],
         anonyme:req.body.anonyme
       });
-      console.log(comment)
       var error = comment.validateSync();
       if (error != undefined) {
         res.status(res.statusCode).json({
@@ -44,7 +43,7 @@ exports.addComment=(req,res)=>{
         )
     }
 exports.getComments=(req,res)=>{
-    post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName userProfileImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
+    /*post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName userProfileImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
       res.status(res.statusCode).json({ 
             data: result.comments,
             message: "post comments",
@@ -56,6 +55,60 @@ exports.getComments=(req,res)=>{
             status: res.statusCode,
             state:false
           });
-    })
+    })*/
+    /**************************************************/
+    console.log(req.body)
+    post_collection.aggregate([
+      {$match:{_id:Mongoose.Types.ObjectId(req.body.postid)}},
+       {$limit: 1},
+       {$lookup:{
+         from:'comments',
+         let: { commentid:"$comments",ownerId:"$commentOwner"},  
+  
+         pipeline : [
+           { $match: { 
+             $expr:  {
+              $and: [
+                 {$in: [ "$_id", "$$commentid" ]},
+              ]
+               } 
+            }, 
+          },
+          { $sort: {date: -1}},
+          { $skip: req.body.skip },
+          { $limit: 3 },
+          {$lookup: {
+            from: "users",
+            let: { ownerId: "$commentOwner" },
+            pipeline : [
+              { $match: { $expr: { $eq: ["$_id", "$$ownerId"] }}},
+              {$project:{
+                userName:1,userProfileImageUrl:1,_id:1
+              }}],
+            as: "commentOwnerData",
+          }},
+           {$project: {_id:1,commentOwner:1,commentText:1,date:1,anonyme:1,commentOwnerData:1,likes:{$size:"$likes"}}},
+           {$sort:{date:-1}},
+         ],
+         as:"comments"
+       }},
+
+       {$project: {commentOwnerData:1,userName:1,userProfileImageUrl:1,comments:1}},
+
+
+     ]).exec().then(result=>{
+       res.status(res.statusCode).json({
+           data: result[0].comments,
+           message: "post comments",
+           status: res.statusCode,
+         });
+   }).catch(error=>{
+      console.log(error)
+       res.status(res.statusCode).json({
+           message: error.message,
+           status: res.statusCode,
+           state:false
+         });
+   })
 }
 
