@@ -9,5 +9,7 @@ router.post('/dislikePost',check_auth,likes_controler.dislikePost)
 router.post('/addLikeToComment',check_auth, likes_controler.addLikeToComment)
 router.post('/dislikeToComment',check_auth, likes_controler.dislikeToComment)
 router.post('/checklikeToComment',check_auth, likes_controler.checklikeToComment)
+router.post('/getLikestUserNameFromPost',check_auth, likes_controler.getLikestUserNameFromPost)
+router.post('/getLikestUserNameFromComment',check_auth, likes_controler.getLikestUserNameFromComment)
 
 module.exports = router

@@ -95,9 +95,10 @@ exports.getOtherUserPosts = async (req, res) => {
 
        as:"posts"
      }},
-     {$project: {userName:1,userProfileImageUrl:1,posts:1}},
+     {$project: {userName:1,currentImageUrl:1,posts:1}},
 
    ]).exec().then(result=>{
+     console.log(result[0].posts)
      res.status(res.statusCode).json({
          data: result[0].posts,
          message: "user posts",

@@ -43,7 +43,7 @@ exports.addComment=(req,res)=>{
         )
     }
 exports.getComments=(req,res)=>{
-    /*post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName userProfileImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
+    /*post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName currentImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
       res.status(res.statusCode).json({ 
             data: result.comments,
             message: "post comments",
@@ -57,7 +57,6 @@ exports.getComments=(req,res)=>{
           });
     })*/
     /**************************************************/
-    console.log(req.body)
     post_collection.aggregate([
       {$match:{_id:Mongoose.Types.ObjectId(req.body.postid)}},
        {$limit: 1},
@@ -83,7 +82,7 @@ exports.getComments=(req,res)=>{
             pipeline : [
               { $match: { $expr: { $eq: ["$_id", "$$ownerId"] }}},
               {$project:{
-                userName:1,userProfileImageUrl:1,_id:1
+                userName:1,currentImageUrl:1,_id:1
               }}],
             as: "commentOwnerData",
           }},
@@ -93,7 +92,7 @@ exports.getComments=(req,res)=>{
          as:"comments"
        }},
 
-       {$project: {commentOwnerData:1,userName:1,userProfileImageUrl:1,comments:1}},
+       {$project: {commentOwnerData:1,userName:1,currentImageUrl:1,comments:1}},
 
 
      ]).exec().then(result=>{

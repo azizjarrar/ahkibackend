@@ -75,10 +75,10 @@ exports.addLikeToPost = async (req, res) => {
   }
   /*comments section */
   exports.dislikeToComment=(req,res)=>{
-    comment_collection.findOneAndUpdate({_id:req.body.postid},{$push:{likes:req.verified.user_auth._id}}).exec().then(result=>{
-      user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$push:{likes:result._id}}).then((result)=>{
+    comment_collection.findOneAndUpdate({_id:req.body.commentid},{$pull:{likes:req.verified.user_auth._id}}).exec().then(result=>{
+      user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{likesToComment:result._id}}).then((result)=>{
           res.status(res.statusCode).json({
-              message:"likes",
+              message:"deslike",
               status: res.statusCode,
               state:true
             });
@@ -145,4 +145,37 @@ exports.addLikeToPost = async (req, res) => {
       });
   })
   }
-  
+  exports.getLikestUserNameFromPost=(req,res)=>{
+    console.log(req.body.postid)
+    //.populate({populate:{path:'likes',select: 'userName currentImageUrl'},options:{limit:10,skip:req.body.skip }}).select("likes")
+    post_collection.findOne({_id:req.body.postid}).populate({path:'likes',select: 'userName currentImageUrl'}).select("likes").exec().then(result=>{
+      res.status(res.statusCode).json({
+        message:"likes userName",
+        data:result,
+        status: res.statusCode,
+        state:true
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+}
+exports.getLikestUserNameFromComment=(req,res)=>{
+  comment_collection.findOne({_id:req.body.commentid}).populate({path:'likes',select: 'userName currentImageUrl'}).select("likes").exec().then(result=>{
+    res.status(res.statusCode).json({
+      message:"likes userName",
+      data:result,
+      status: res.statusCode,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
