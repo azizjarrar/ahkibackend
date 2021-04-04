@@ -6,6 +6,7 @@ const post_controller_route=require('./api/routes/post_controller_route')
 const refreshAccessToken_route = require('./api/routes/refreshAccessToken')
 const comments_controller_route = require('./api/routes/comments_route')
 const like_controller_route=require('./api/routes/likes')
+const image_controller_route=require('./api/routes/image_route')
 const app = express()
 const morgan = require('morgan')
 
@@ -43,6 +44,7 @@ mongoose.connect(
     app.use('/postnrmltopic', post_controller_route)
     app.use('/comments', comments_controller_route)
     app.use('/like', like_controller_route)
+    app.use('/image', image_controller_route)
 
     /***************for sending pics in random chat*********************/
 

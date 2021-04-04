@@ -16,6 +16,7 @@ const User = mongoose.Schema({
     socketId:{type:String},
     joindate:{type:Date,default:today},
     email:{type:String},
+    currentImgId:{type:mongoose.Schema.Types.ObjectId,ref:'Images'},
     userProfileImagesUrl:[{type:mongoose.Schema.Types.ObjectId,ref:'Images'}],
     verified:{type:String},
     verifiedCode:{type:String},

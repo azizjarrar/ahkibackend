@@ -311,7 +311,7 @@ exports.getUserData=(req,res)=>{
       });
     })*/
     user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},
-      {$project: {currentImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
+      {$project: {currentImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,currentImgId:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
     ]).exec().then(result=>{
       res.status(res.statusCode).json({
         data: result,
@@ -342,18 +342,22 @@ exports.getotherUsersData=async (req,res)=>{
 }
 
 exports.changeprofileimage=async (req,res)=>{
-  console.log(req.body)
+  var today = new Date()
   var Image
   Image = new image_collection({
     _id: new Mongoose.Types.ObjectId(),
     imageUrl:process.env.ip+req.file.path,
     ImageOwner:req.verified.user_auth._id,
+    imageText:req.body.bio,
+    date:today,
     likes:[],
+    
     Comments:[],
   });
+
   Image.save().then(async (result) =>{
-    
-    let data = await user_collection.findOneAndUpdate({ _id: req.verified.user_auth._id}, {$set:{currentImageUrl:process.env.ip+req.file.path},$push: {userProfileImagesUrl:Image._id} }, { new: true }).select('_id currentImageUrl').exec().then((result)=>{
+
+    let data = await user_collection.findOneAndUpdate({ _id: req.verified.user_auth._id}, {$set:{currentImgId:Image._id,currentImageUrl:process.env.ip+req.file.path},$push: {userProfileImagesUrl:Image._id} }, { new: true }).select('_id currentImageUrl').exec().then((result)=>{
       res.status(res.statusCode).json({
         Picurl: process.env.ip+req.file.path,
         status: res.statusCode,
@@ -860,7 +864,9 @@ exports.deleteFollow=(req,res)=>{
 
 }
 exports.getUserImages=(req,res)=>{
-      user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)}).populate({path:"userProfileImagesUrl",select:'_id imageUrl'}).select("userProfileImagesUrl").exec().then(result=>{
+
+      user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)}).populate({path:"userProfileImagesUrl",select:'_id imageUrl',options:{sort: {date: -1}}}).select("userProfileImagesUrl").exec().then(result=>{
+        
         res.status(res.statusCode).json({
           data:result,
           message: "images",
