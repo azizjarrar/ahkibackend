@@ -20,7 +20,7 @@ exports.getImageData=(req,res)=>{
         let: { userProfileImagesUrlArray: "$userProfileImagesUrl" },    
         pipeline : [
             { $match: { $expr: { $eq: [ "$_id", Mongoose.Types.ObjectId(req.body.currentImgId) ] } }, },
-            { "$project": { likes: {$size:"$likes"}, imageText:1,Comments: {$size:"$Comments"} ,ImageOwner:1,imageUrl:1,date:1}},
+            { "$project": { likes: {$size:"$likes"}, imageText:1,Comments: {$size:"$comments"} ,ImageOwner:1,imageUrl:1,date:1}},
 
         ],
         as: "images"
@@ -28,7 +28,6 @@ exports.getImageData=(req,res)=>{
         {$project: {images:1,imageText:1,userProfileImagesUrl:1,userName:1,_id:1,currentImageUrl:1}},
 
      ]).exec().then(async result=>{
-        console.log(result[0].images)
          const prev= await user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)})
          .populate({path:"userProfileImagesUrl",match: {date:{$lt: result[0].images[0].date}},select:'_id',options: {sort: {date: -1},limit: 1}
          }).select("userProfileImagesUrl").exec()

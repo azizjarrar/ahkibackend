@@ -24,7 +24,11 @@ const User = mongoose.Schema({
     followers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
     post:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
     likes:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
-    likesToComment:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
+    likesToComment:[{type:mongoose.Schema.Types.ObjectId,ref:'Comments'}],
+    /************************* */
+    likesToImage:[{type:mongoose.Schema.Types.ObjectId,ref:'Images'}],
+    likesToImageComment:[{type:mongoose.Schema.Types.ObjectId,ref:'ImageComments'}],
+    
     notification:[{type:mongoose.Schema.Types.ObjectId,ref:'notification'}],
     resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}},
     changeEmail:{ExpiresIn:{Type:Date},newEmail:{Type:String},code:{Type:String}}

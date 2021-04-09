@@ -6,6 +6,6 @@ const Images = mongoose.Schema({
     imageText:{type:String},
     date:{type:Date},
     likes:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
-    Comments:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
+    comments:[{type:mongoose.Schema.Types.ObjectId,ref:'ImageComments'}],
 })
 module.exports=mongoose.model('Images',Images)

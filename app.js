@@ -7,6 +7,8 @@ const refreshAccessToken_route = require('./api/routes/refreshAccessToken')
 const comments_controller_route = require('./api/routes/comments_route')
 const like_controller_route=require('./api/routes/likes')
 const image_controller_route=require('./api/routes/image_route')
+const image_comments_controller_route=require('./api/routes/image_comments_route')
+const image_likes_controller_route=require('./api/routes/image_likes_routes')
 const app = express()
 const morgan = require('morgan')
 
@@ -45,6 +47,8 @@ mongoose.connect(
     app.use('/comments', comments_controller_route)
     app.use('/like', like_controller_route)
     app.use('/image', image_controller_route)
+    app.use('/imageComments', image_comments_controller_route)
+    app.use('/imageLikes', image_likes_controller_route)
 
     /***************for sending pics in random chat*********************/
 

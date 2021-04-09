@@ -146,7 +146,6 @@ exports.addLikeToPost = async (req, res) => {
   })
   }
   exports.getLikestUserNameFromPost=(req,res)=>{
-    console.log(req.body.postid)
     //.populate({populate:{path:'likes',select: 'userName currentImageUrl'},options:{limit:10,skip:req.body.skip }}).select("likes")
     post_collection.findOne({_id:req.body.postid}).populate({path:'likes',select: 'userName currentImageUrl'}).select("likes").exec().then(result=>{
       res.status(res.statusCode).json({

@@ -327,7 +327,7 @@ exports.getUserData=(req,res)=>{
 }
 exports.getotherUsersData=async (req,res)=>{
     try{
-  user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id) }},{$project: { currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
+  user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id) }},{$project: { currentImgId:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
     res.status(res.statusCode).json({
       data: result,
       status: res.statusCode,
