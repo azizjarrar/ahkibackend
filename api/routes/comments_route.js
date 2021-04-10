@@ -5,5 +5,6 @@ const check_auth=require("../middleware/check_auth")
 
 router.post('/addComment',check_auth ,comments_controler.addComment)
 router.post('/getComments', comments_controler.getComments)
+router.post('/deleteComment',check_auth,comments_controler.deleteComment)
 
 module.exports = router

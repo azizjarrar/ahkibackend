@@ -42,20 +42,7 @@ exports.addComment=(req,res)=>{
         )
     }
 exports.getComments=(req,res)=>{
-    /*post_collection.findOne({_id:req.body.postid}).populate({path:"comments",populate:{path:'commentOwner',select: 'userName currentImageUrl'},options:{ sort: {date: -1},limit:3,skip:req.body.skip }}).select("comments").exec().then(result=>{
-      res.status(res.statusCode).json({ 
-            data: result.comments,
-            message: "post comments",
-            status: res.statusCode,
-          });
-    }).catch(error=>{
-        res.status(res.statusCode).json({
-            message: error.message,
-            status: res.statusCode,
-            state:false
-          });
-    })*/
-    /**************************************************/
+
     post_collection.aggregate([
       {$match:{_id:Mongoose.Types.ObjectId(req.body.postid)}},
        {$limit: 1},
@@ -101,7 +88,6 @@ exports.getComments=(req,res)=>{
            status: res.statusCode,
          });
    }).catch(error=>{
-      console.log(error)
        res.status(res.statusCode).json({
            message: error.message,
            status: res.statusCode,
@@ -110,3 +96,30 @@ exports.getComments=(req,res)=>{
    })
 }
 
+exports.deleteComment=(req,res)=>{
+  console.log(req.body)
+  /*comments_collection.findOneAndRemove({_id:req.body.commentid}).exec().then(resultResult=>{
+    post_collection.findOneAndUpdate({_id:req.body.postid},{$pull:{comments:comment._id}}).exec().then(result=>{
+      user_collection.updateMany({_id:{$in:resultResult.likes}},{$pull:{likesToComment:req.body.commentid}}).exec().then((res)=>{
+        //ma3andimna3ml
+      }).catch(e=>{
+        res.status(res.statusCode).json({
+          message: err.message,
+          status: res.statusCode,
+        });        
+      })
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })*/
+}

@@ -34,6 +34,7 @@ exports.addLikeToImage=(req,res)=>{
 }
 exports.checklikeToImage=(req,res)=>{
     user_collection.findOne({_id:req.verified.user_auth._id,likesToImage:req.body.imgid}).exec().then((result)=>{
+      console.log(req.body)
         if(result!=null){
           res.status(res.statusCode).json({
               status: res.statusCode,
@@ -55,14 +56,15 @@ exports.checklikeToImage=(req,res)=>{
     })
 }
 exports.dislikeImage=(req,res)=>{
+  console.log(req.body)
     image_Collection.findOneAndUpdate({_id:req.body.imgid},{$pull:{likes:req.verified.user_auth._id}}).exec().then(result=>{
-        user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$likesToImage:{likes:result._id}}).then((result)=>{
+        user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{likesToImage:result._id}}).then((result)=>{
             res.status(res.statusCode).json({
                 message:"likes",
                 status: res.statusCode,
                 state:true
               });
-        }).catch(e=>{
+        }).catch(error=>{
           res.status(res.statusCode).json({
           message: error.message,
           status: res.statusCode,

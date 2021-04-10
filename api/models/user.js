@@ -5,7 +5,6 @@ const User = mongoose.Schema({
     _id:mongoose.Schema.Types.ObjectId,
     userName:{type:String,require:true},
     tel:{type:String},
-    currentImageUrl:{type:String},
     idfacebook:{type:String},
     firstname:{type:String},
     lastname:{type:String},
@@ -16,8 +15,9 @@ const User = mongoose.Schema({
     socketId:{type:String},
     joindate:{type:Date,default:today},
     email:{type:String},
+    currentImageUrl:{type:String},//this is url
     currentImgId:{type:mongoose.Schema.Types.ObjectId,ref:'Images'},
-    userProfileImagesUrl:[{type:mongoose.Schema.Types.ObjectId,ref:'Images'}],
+    userProfileImagesUrl:[{type:mongoose.Schema.Types.ObjectId,ref:'Images'}],//its not url its the all object i will change name later
     verified:{type:String},
     verifiedCode:{type:String},
     following:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],

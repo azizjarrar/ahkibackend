@@ -1,15 +1,7 @@
 const user_collection = require("../models/user");
+const image_collection = require("../models/image");
 const Mongoose = require("mongoose");
-/*
-   {$lookup: {
-        from: "images",
-        let: { OneElemetOfArray: "$userProfileImagesUrl" },    
-        pipeline : [
-            { $match: { $expr: { $eq: [ req.body.currentImgId, "$$OneElemetOfArray" ] } }, },
-        ],
-        as: "images"
-        }},
-        {$project: {images:1}}, */
+
 exports.getImageData=(req,res)=>{
     user_collection.aggregate([
        {$match:{_id:Mongoose.Types.ObjectId(req.body.userid)}},
@@ -25,7 +17,7 @@ exports.getImageData=(req,res)=>{
         ],
         as: "images"
         }},
-        {$project: {images:1,imageText:1,userProfileImagesUrl:1,userName:1,_id:1,currentImageUrl:1}},
+        {$project: {images:1,imageText:1,userProfileImagesUrl:1,userName:1,_id:1,currentImageUrl:1,ImageOwner:1}},
 
      ]).exec().then(async result=>{
          const prev= await user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)})
@@ -46,35 +38,132 @@ exports.getImageData=(req,res)=>{
      }).catch(error=>{
          console.log(error)
      })
-   /* user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)}).populate({path:"userProfileImagesUrl",match: {_id:req.body.currentImgId},select:'_id imageUrl date'}).select("userProfileImagesUrl").exec().then(async result=>{
-
-
-
-
-        const prev= await user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)})
-        .populate({path:"userProfileImagesUrl",match: {date:{$lt: result.userProfileImagesUrl[0].date}},select:'_id',options: {sort: {date: -1},limit: 1}
-        }).select("userProfileImagesUrl").exec()
-        const next=await user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)})
-        .populate({path:"userProfileImagesUrl",match: {date:{$gt: result.userProfileImagesUrl[0].date}},select:'_id',options: {sort: {date: 1},limit: 1}})
-        .select("userProfileImagesUrl").exec()
-        res.status(res.statusCode).json({
-          currentimage:result.userProfileImagesUrl[0],
-          previmage:prev,
-          nextimage:next,
-          message: "images",
-          state:true
-        });
-      }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })*/
 }
-/**
- *             $project:
-               {
-                 index: { $indexOfArray: [ "$userProfileImagesUrl", 2 ] },
-               }
- */
+
+exports.deleteImage=(req,res)=>{
+  user_collection.findOne({_id:req.verified.user_auth._id}).exec().then( async result=>{
+    if(result!= null){
+      console.log("/***********************************************/")
+      console.log(result.userProfileImagesUrl)
+      if(result.currentImgId==req.body.imageid){
+        if(result.userProfileImagesUrl.length==1){
+          res.status(res.statusCode).json({
+            message: "you should at least have one image",
+            state:true,
+            status: res.statusCode,
+          });
+        }else{
+         const imagedata = await image_collection.findOne({_id:result.userProfileImagesUrl[result.userProfileImagesUrl.length-2]}).exec()
+          user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{userProfileImagesUrl:req.body.imageid},$set:{currentImgId:result.userProfileImagesUrl[result.userProfileImagesUrl.length-2],currentImageUrl:imagedata.imageUrl}}).exec().then(()=>{
+            image_collection.findOneAndRemove({_id:req.body.imageid,ImageOwner:req.verified.user_auth._id}).exec().then((result=>{
+              if(result==null){
+                res.status(res.statusCode).json({
+                  message: "access denied for user",
+                  status: res.statusCode,
+                });
+              }else{
+                user_collection.updateMany({_id:{$in:result.likes}},{$pull:{likesToImage:req.body.imageid}}).exec().then((res)=>{
+                  //ma3andimna3ml
+                }).catch(e=>{
+                  res.status(res.statusCode).json({
+                    message: err.message,
+                    status: res.statusCode,
+                  });        
+                })
+              if(result.postImage!=undefined){
+                try {
+                  fs.unlinkSync(result.imageUrl.slice(result.imageUrl.indexOf("uploads"),455));
+                  res.status(res.statusCode).json({
+                    message: "post was deleted",
+                    status: res.statusCode,
+                  });
+                } catch (err) {
+        
+                  console.log(err)
+                  res.status(res.statusCode).json({
+                    message: err.message,
+                    status: res.statusCode,
+                  });
+              
+                }
+              }else{
+                
+                res.status(res.statusCode).json({
+                  message: "post was deleted",
+                  status: res.statusCode,
+                });
+              }
+            }
+            }))
+          }).catch(error=>{
+            res.status(res.statusCode).json({
+              message: error.message,
+              status: res.statusCode,
+            });
+          })
+        }
+
+      }else{
+        user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{userProfileImagesUrl:req.body.imageid}}).exec().then(()=>{
+          image_collection.findOneAndRemove({_id:req.body.imageid,ImageOwner:req.verified.user_auth._id}).exec().then((result=>{
+            if(result==null){
+              res.status(res.statusCode).json({
+                message: "access denied for user",
+                status: res.statusCode,
+              });
+            }else{
+              user_collection.updateMany({_id:{$in:result.likes}},{$pull:{likesToImage:req.body.imageid}}).exec().then((res)=>{
+                //ma3andimna3ml
+              }).catch(e=>{
+                res.status(res.statusCode).json({
+                  message: err.message,
+                  status: res.statusCode,
+                });        
+              })
+            if(result.postImage!=undefined){
+              try {
+                fs.unlinkSync(result.imageUrl.slice(result.imageUrl.indexOf("uploads"),455));
+                res.status(res.statusCode).json({
+                  message: "post was deleted",
+                  status: res.statusCode,
+                });
+              } catch (err) {
+      
+                console.log(err)
+                res.status(res.statusCode).json({
+                  message: err.message,
+                  status: res.statusCode,
+                });
+            
+              }
+            }else{
+              
+              res.status(res.statusCode).json({
+                message: "post was deleted",
+                status: res.statusCode,
+              });
+            }
+          }
+          }))
+        }).catch(error=>{
+          res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+          });
+        })
+      }
+    }else{
+      res.status(res.statusCode).json({
+        message: "user not found",
+        status: res.statusCode,
+      });
+    }
+  
+
+
+
+
+
+  })
+
+}
