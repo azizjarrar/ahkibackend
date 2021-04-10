@@ -1,5 +1,7 @@
 const imageComments_Collection = require("../models/imageComments");
 const image_Collection = require('../models/image')
+const user_collection  = require('../models/user')
+
 const Mongoose = require("mongoose");
 
 exports.addCommentToImage=(req,res)=>{
@@ -92,4 +94,35 @@ exports.getCommentsImage=(req,res)=>{
              state:false
            });
      })
+}
+exports.deleteCommentFromImage=(req,res)=>{
+  imageComments_Collection.findOneAndRemove({_id:req.body.commentid}).exec().then(resultResult=>{
+    image_Collection.findOneAndUpdate({_id:req.body.imgid},{$pull:{comments:req.body.commentid}}).exec().then(result=>{
+      user_collection.updateMany({_id:{$in:resultResult.likes}},{$pull:{likesToImageComment:req.body.commentid}}).exec().then((resultUser)=>{
+        res.status(res.statusCode).json({
+          message: "comment deleted",
+          status: res.statusCode,
+        });
+        //ma3andimna3ml
+      }).catch(error=>{
+        console.log(error)
+        res.status(res.statusCode).json({
+          message: err.message,
+          status: res.statusCode,
+        });        
+      })
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
 }

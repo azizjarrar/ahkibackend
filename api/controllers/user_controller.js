@@ -35,6 +35,7 @@ exports.register = async (req, res) => {
           tel,
           age,
           verified:true,
+          privacy:"private"
         });
     }else{
        result  = await   user_collection.findOne({email:req.body.email}).exec()
@@ -52,6 +53,7 @@ exports.register = async (req, res) => {
         age,
         email,
         verified:true,
+        privacy:"private",
       });
     }
       var error = User.validateSync();
@@ -879,5 +881,36 @@ exports.getUserImages=(req,res)=>{
       state:false
     });
   })
-  
+}
+exports.getPrivacy=(req,res)=>{
+  user_collection.findOne({_id: Mongoose.Types.ObjectId(req.verified.user_auth._id)}).select("privacy").exec().then(result=>{
+    res.status(res.statusCode).json({
+      data:result,
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+
+}
+exports.updatePrivacy=(req,res)=>{
+  console.log(req.body)
+  user_collection.findOneAndUpdate({_id: Mongoose.Types.ObjectId(req.verified.user_auth._id)},{$set:{privacy:req.body.privacy}}).select("privacy").exec().then(result=>{
+    
+    res.status(res.statusCode).json({
+      data:result,
+      message: "images",
+      state:true
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
 }

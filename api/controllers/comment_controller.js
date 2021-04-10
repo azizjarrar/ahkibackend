@@ -1,5 +1,6 @@
 const post_collection = require("../models/post");
 const comments_collection = require('../models/comments')
+const user_collection  = require('../models/user')
 const Mongoose = require("mongoose");
 exports.addComment=(req,res)=>{
     var comment = new comments_collection({
@@ -97,12 +98,16 @@ exports.getComments=(req,res)=>{
 }
 
 exports.deleteComment=(req,res)=>{
-  console.log(req.body)
-  /*comments_collection.findOneAndRemove({_id:req.body.commentid}).exec().then(resultResult=>{
-    post_collection.findOneAndUpdate({_id:req.body.postid},{$pull:{comments:comment._id}}).exec().then(result=>{
-      user_collection.updateMany({_id:{$in:resultResult.likes}},{$pull:{likesToComment:req.body.commentid}}).exec().then((res)=>{
+  comments_collection.findOneAndRemove({_id:req.body.commentid}).exec().then(resultResult=>{
+    post_collection.findOneAndUpdate({_id:req.body.postid},{$pull:{comments:req.body.commentid}}).exec().then(result=>{
+      user_collection.updateMany({_id:{$in:resultResult.likes}},{$pull:{likesToComment:req.body.commentid}}).exec().then((resultUser)=>{
+        res.status(res.statusCode).json({
+          message: "comment deleted",
+          status: res.statusCode,
+        });
         //ma3andimna3ml
-      }).catch(e=>{
+      }).catch(error=>{
+        console.log(error)
         res.status(res.statusCode).json({
           message: err.message,
           status: res.statusCode,
@@ -121,5 +126,5 @@ exports.deleteComment=(req,res)=>{
       status: res.statusCode,
       state:false
     });
-  })*/
+  })
 }

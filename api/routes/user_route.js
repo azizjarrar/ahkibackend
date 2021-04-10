@@ -84,6 +84,8 @@ router.post('/getFollowingOfUser',check_auth,user_controler.getFollowingOfUser)/
 router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
 router.post('/deleteFollow',check_auth,user_controler.deleteFollow)//tchouf thot btn follow wala unfofllow
 router.post('/getUserImages',check_auth,user_controler.getUserImages)//tchouf thot btn follow wala unfofllow
+router.post('/getPrivacy',check_auth,user_controler.getPrivacy)//tchouf thot btn follow wala unfofllow
+router.post('/updatePrivacy',check_auth,user_controler.updatePrivacy)//tchouf thot btn follow wala unfofllow
 
 
 
