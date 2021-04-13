@@ -1,0 +1,12 @@
+const express = require('express')
+const router = express.Router()
+const following_controler = require('../controllers/following')
+const check_auth=require("../middleware/check_auth")
+router.post('/getFollowingOfUser',check_auth,following_controler.getFollowingOfUser)
+router.post('/unfollowUser',check_auth,following_controler.unfollowUser)
+router.post('/followUser',check_auth,following_controler.followUser)
+router.post('/checkIffollow',check_auth,following_controler.checkIffollow)
+router.post('/removeFollowPending',check_auth,following_controler.removeFollowPending)
+router.post('/acceptfollow',check_auth,following_controler.acceptfollow)
+router.post('/deniedfollow',check_auth,following_controler.deniedfollow)
+module.exports = router

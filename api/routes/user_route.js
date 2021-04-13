@@ -68,24 +68,16 @@ router.post('/removeToken',user_controler.removeToken)
 router.post('/updateProfileInfo',check_auth,user_controler.updateProfileInfo)
 router.post('/changePassword',check_auth,user_controler.changePassword)
 router.post('/searchAccountToForgetPassword',user_controler.searchAccountToForgetPassword)
-router.post('/resetPassword',user_controler.resetPassword)//hedhi tab3ethlk il code
-router.post('/SetNewPassword',user_controler.SetNewPassword)//hedhi tbadek mdp
-router.post('/updateEmailSendCode',check_auth,user_controler.updateEmailSendCode)//hedhi li tab3ath code  lil email jdid li theb tbadlou
-router.post('/updateEmail',check_auth,user_controler.updateEmail)//hedhi li tbadel email t3adilha code
-router.post('/checkIffollow',check_auth,user_controler.checkIffollow)//tchouf thot btn follow wala unfofllow
-router.post('/followUser',check_auth,user_controler.followUser)//tchouf thot btn follow wala unfofllow
-router.post('/unfollowUser',check_auth,user_controler.unfollowUser)//tchouf thot btn follow wala unfofllow
-router.post('/getFollowing',check_auth,user_controler.getFollowing)//tchouf thot btn follow wala unfofllow
-router.post('/getFollowers',check_auth,user_controler.getFollowers)//tchouf thot btn follow wala unfofllow
-router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
-router.post('/SearchUserByUserName',user_controler.SearchUserByUserName)//tchouf thot btn follow wala unfofllow
-router.post('/getFollowersOfUser',check_auth,user_controler.getFollowersOfUser)//tchouf thot btn follow wala unfofllow
-router.post('/getFollowingOfUser',check_auth,user_controler.getFollowingOfUser)//tchouf thot btn follow wala unfofllow
-router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)//tchouf thot btn follow wala unfofllow
-router.post('/deleteFollow',check_auth,user_controler.deleteFollow)//tchouf thot btn follow wala unfofllow
-router.post('/getUserImages',check_auth,user_controler.getUserImages)//tchouf thot btn follow wala unfofllow
-router.post('/getPrivacy',check_auth,user_controler.getPrivacy)//tchouf thot btn follow wala unfofllow
-router.post('/updatePrivacy',check_auth,user_controler.updatePrivacy)//tchouf thot btn follow wala unfofllow
+router.post('/resetPassword',user_controler.resetPassword)
+router.post('/SetNewPassword',user_controler.SetNewPassword)
+router.post('/updateEmailSendCode',check_auth,user_controler.updateEmailSendCode)
+router.post('/updateEmail',check_auth,user_controler.updateEmail)
+router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)
+router.post('/SearchUserByUserName',user_controler.SearchUserByUserName)
+router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)
+router.post('/getUserImages',check_auth,user_controler.getUserImages)
+router.post('/getPrivacy',check_auth,user_controler.getPrivacy)
+router.post('/updatePrivacy',check_auth,user_controler.updatePrivacy)
 
 
 

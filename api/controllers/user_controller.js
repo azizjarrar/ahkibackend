@@ -269,49 +269,11 @@ exports.updatePhoneNumber=async (req,res)=>{
     }
   })
 }
-exports.FollowUser=(req,res)=>{
 
-
-}
-exports.UnFollowUser=(req,res)=>{
-
-}
 exports.getUserData=(req,res)=>{
-  /*user_collection.findOne({ _id: req.verified.user_auth._id }).exec().then(result=>{
-    res.status(res.statusCode).json({
-      data: result,
-      status: res.statusCode,
-    });
-  })*/
-  try{
-   /* user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }}
-      //,{$project: { userProfileImagesUrl:{$arrayElemAt:[ "$userProfileImagesUrl",  -1 ] },tel:1,biography : 1,userName:1,firstname:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
-      /*{ $lookup:
-      {
-        from: "images",
-        localField: "userProfileImagesUrl",
-        foreignField: "_id",
-        as: "image"
-      }},
 
-      {$lookup: {
-        from: "images",
-        let: { data: "$userProfileImagesUrl" },
-        pipeline : [
-          { $match: { $expr: { $in: ["$_id", "$$data"] }}},
-          {$project: {_id:1,imageUrl:1}}
-          ],
-        as: "image",
-      }},
-      {$project: { image:{$arrayElemAt:[ "$image",  -1 ] },tel:1,biography : 1,userName:1,firstname:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
-    ]).exec().then(result=>{
-      image_collection
-      console.log(result[0])
-      res.status(res.statusCode).json({
-        data: result,
-        status: res.statusCode,
-      });
-    })*/
+  try{
+
     user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},
       {$project: {currentImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,currentImgId:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
     ]).exec().then(result=>{
@@ -328,19 +290,35 @@ exports.getUserData=(req,res)=>{
   }
 }
 exports.getotherUsersData=async (req,res)=>{
-    try{
-  user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id) }},{$project: { currentImgId:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
-    res.status(res.statusCode).json({
-      data: result,
-      status: res.statusCode,
-    });
-  })
-}catch(e){
-  res.status(res.statusCode).json({
-    message: e.message,
-    status: res.statusCode,
-  });
-}
+    //pendingFollowers
+    //req.verified.user_auth._id
+    //user_collection.findOne({_id: Mongoose.Types.ObjectId(req.params.id),followers:req.verified.user_auth._id}).exec().then((resultUser)=>{})
+        try{
+          user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id)}},{$limit: 1},{$project: { currentImgId:1,privacy:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
+
+            if(result.length==0){
+              res.status(res.statusCode).json({
+                data: {},
+                state:false,
+                status: res.statusCode,
+              });
+            }else{
+              res.status(res.statusCode).json({
+                data: result,
+                status: res.statusCode,
+              });
+            }
+  
+          })
+        }catch(e){
+          res.status(res.statusCode).json({
+            message: e.message,
+            status: res.statusCode,
+          });
+        }
+  
+    
+
 }
 
 exports.changeprofileimage=async (req,res)=>{
@@ -665,28 +643,7 @@ exports.updateEmail=(req,res)=>{
     })
 }
 
-exports.checkIffollow=(req,res)=>{
-  user_collection.findOne({_id:req.verified.user_auth._id,following:req.body.theOtherPersonId}).select("following").exec().then(async result=>{
-    if(result==null){
-      res.status(res.statusCode).json({
-        status: res.statusCode,
-        following:false,
-      }); 
-    }else{
-      res.status(res.statusCode).json({
-        status: res.statusCode,
-        following:true,
-      }); 
-    }
- 
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
+
 exports.followUser=(req,res)=>{
   user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$push:{following:req.body.userToFollow}}).exec().then(async result=>{
     user_collection.findOneAndUpdate({_id:req.body.userToFollow},{$push:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
@@ -733,40 +690,8 @@ exports.unfollowUser=(req,res)=>{
     });
   })
 }
-exports.getFollowing=(req,res)=>{
-  user_collection.findOne({_id:req.verified.user_auth._id}).populate("following").exec().then(async result=>{
-    res.status(res.statusCode).json({
-      data:result,
-      message: "ge follwing ",
-      status: res.statusCode,
-      state:true
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
 
-}
-exports.getFollowers=(req,res)=>{
-  user_collection.findOne({_id:req.verified.user_auth._id}).select("followers").populate({path:"followers",select:'userName currentImageUrl'}).exec().then(async result=>{
-    res.status(res.statusCode).json({
-      data:result,
-      message: "get Followers ",
-      status: res.statusCode,
-      state:true
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
 
-}
 exports.getrandomUsers=(req,res)=>{
   user_collection.aggregate([{ $sample: { size: 6 } },{$project: { userName:1,currentImageUrl:1}} ]).exec().then(result=>{
   res.status(res.statusCode).json({

@@ -32,7 +32,8 @@ const User = mongoose.Schema({
     notification:[{type:mongoose.Schema.Types.ObjectId,ref:'notification'}],
     resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}},
     changeEmail:{ExpiresIn:{Type:Date},newEmail:{Type:String},code:{Type:String}},
-    privacy:{type:String}
+    privacy:{type:String},
+    pendingFollowers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}]
 })
 User.index({ userName: "text"}); // schema level
 User.on('index', error => {

@@ -9,9 +9,11 @@ const like_controller_route=require('./api/routes/likes')
 const image_controller_route=require('./api/routes/image_route')
 const image_comments_controller_route=require('./api/routes/image_comments_route')
 const image_likes_controller_route=require('./api/routes/image_likes_routes')
+const follower_controller_route=require('./api/routes/followers')
+const following_controller_route=require('./api/routes/following')
+const getnotifications_controller_router=require('./api/routes/notification')
 const app = express()
 const morgan = require('morgan')
-
 mongoose.connect(
   'mongodb://localhost:27017/ahki',
   { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true },
@@ -49,7 +51,9 @@ mongoose.connect(
     app.use('/image', image_controller_route)
     app.use('/imageComments', image_comments_controller_route)
     app.use('/imageLikes', image_likes_controller_route)
-
+    app.use('/followe', follower_controller_route)
+    app.use('/following', following_controller_route)
+    app.use('/notification',getnotifications_controller_router)
     /***************for sending pics in random chat*********************/
 
     app.use((req, res) => {
