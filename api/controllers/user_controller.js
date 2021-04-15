@@ -1,6 +1,8 @@
 const user_collection = require("../models/user");
 const image_collection = require("../models/image");
 const refreshAccessToken_collection = require('../models/refreshAccessToken') 
+const followers_collection =require('../models/followers')
+
 const bcrypt = require("bcrypt");
 const ENV = require("dotenv");
 const jwt = require("jsonwebtoken");
@@ -11,6 +13,8 @@ var nodemailer = require('nodemailer');
 ENV.config();
 
 exports.register = async (req, res) => {
+  var today = new Date()
+
   var tel,dialCode,email,saltRounds,hasdhedPassword,password,userName,age;
   var result
   var User
@@ -35,7 +39,8 @@ exports.register = async (req, res) => {
           tel,
           age,
           verified:true,
-          privacy:"private"
+          privacy:"private",
+          joindate:today
         });
     }else{
        result  = await   user_collection.findOne({email:req.body.email}).exec()
@@ -54,6 +59,7 @@ exports.register = async (req, res) => {
         email,
         verified:true,
         privacy:"private",
+        joindate:today
       });
     }
       var error = User.validateSync();
@@ -91,9 +97,12 @@ exports.register = async (req, res) => {
               userid:userData._id,
               state:true
             });
-          }).catch(e=>{
-            console.log(e.message)
-          });
+          }).catch(error=>{
+            res.status(res.statusCode).json({
+              message: error.message,
+              status: res.statusCode
+          })          
+        });
         }
       
   } catch (err) {
@@ -271,11 +280,12 @@ exports.updatePhoneNumber=async (req,res)=>{
 }
 
 exports.getUserData=(req,res)=>{
-
+ 
+ 
   try{
 
     user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.verified.user_auth._id) }},
-      {$project: {currentImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,currentImgId:1,lastname:1,age:1,following: { $size:"$following" },followers: { $size:"$followers" }}}
+      {$project: {currentImageUrl:1,tel:1,biography : 1,userName:1,firstname:1,currentImgId:1,lastname:1,age:1}}
     ]).exec().then(result=>{
       res.status(res.statusCode).json({
         data: result,
@@ -290,25 +300,58 @@ exports.getUserData=(req,res)=>{
   }
 }
 exports.getotherUsersData=async (req,res)=>{
-    //pendingFollowers
-    //req.verified.user_auth._id
-    //user_collection.findOne({_id: Mongoose.Types.ObjectId(req.params.id),followers:req.verified.user_auth._id}).exec().then((resultUser)=>{})
-        try{
-          user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id)}},{$limit: 1},{$project: { currentImgId:1,privacy:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1,following: { $size:"$following" },followers: { $size:"$followers" }}}]).exec().then(result=>{
 
-            if(result.length==0){
-              res.status(res.statusCode).json({
-                data: {},
-                state:false,
-                status: res.statusCode,
-              });
-            }else{
-              res.status(res.statusCode).json({
-                data: result,
-                status: res.statusCode,
-              });
-            }
+        try{
+          user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id)}},{$limit: 1},{$project: {privacy:1, currentImgId:1,privacy:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1}}]).exec().then(result=>{
+
+            if(result.length!=0){
+
+              if(result[0].privacy=="private"){
+                if(req.verified==undefined){
+                  res.status(res.statusCode).json({
+                    data: {},
+                    state:false,
+                    status: res.statusCode,
+                  });
+                }else{
+                  followers_collection.findOne({userid:req.params.id,followersid:req.verified.user_auth._id}).exec().then(resultFollower=>{
+                    if(resultFollower!=null && resultFollower!=undefined){
+                      res.status(res.statusCode).json({
+                        private:"public",
+                        data: result,
+                        status: res.statusCode,
+                      });
+                    }else{
+                      res.status(res.statusCode).json({
+                        private:"private",
+                        data: result,
+                        status: res.statusCode,
+                      });
+                    }
+                  }).catch(error=>{
+                    res.status(res.statusCode).json({
+                      private:"private",
+                      data: result,
+                      status: res.statusCode,
+                    });
+                  })
+                }
   
+
+              }else{
+                res.status(res.statusCode).json({
+                  private:"public",
+                  data: result,
+                  status: res.statusCode,
+                });
+              }
+            }else{
+                res.status(res.statusCode).json({
+                  data: {},
+                  state:false,
+                  status: res.statusCode,
+                });
+            }
           })
         }catch(e){
           res.status(res.statusCode).json({
@@ -644,52 +687,8 @@ exports.updateEmail=(req,res)=>{
 }
 
 
-exports.followUser=(req,res)=>{
-  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$push:{following:req.body.userToFollow}}).exec().then(async result=>{
-    user_collection.findOneAndUpdate({_id:req.body.userToFollow},{$push:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
-      res.status(res.statusCode).json({
-        message: "saye amaltou follow",
-        status: res.statusCode,
-        state:true
-      });
-    }).catch(error=>{
-      res.status(res.statusCode).json({
-        message: error.message,
-        status: res.statusCode,
-        state:false
-      });
-    })
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
-exports.unfollowUser=(req,res)=>{
-  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{following:req.body.userToUnfollow}}).exec().then(async result=>{
-    user_collection.findOneAndUpdate({_id:req.body.userToUnfollow},{$pull:{followers:req.verified.user_auth._id}}).exec().then(async result=>{
-      res.status(res.statusCode).json({
-        message: "saye amaltou follow",
-        status: res.statusCode,
-        state:true
-      });
-    }).catch(error=>{
-      res.status(res.statusCode).json({
-        message: error.message,
-        status: res.statusCode,
-        state:false
-      });
-    })
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
+
+
 
 
 exports.getrandomUsers=(req,res)=>{
@@ -734,79 +733,9 @@ exports.SearchUserByUserName=(req,res)=>{
   }
 
 }
-exports.getFollowersOfUser=(req,res)=>{
-  user_collection.findOne({_id:req.body.id}).select("followers").populate({path:"followers",select:'userName currentImageUrl'}).exec().then(async result=>{
-    res.status(res.statusCode).json({
-      data:result,
-      message: "get Followers ",
-      status: res.statusCode,
-      state:true
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
-exports.getFollowingOfUser=(req,res)=>{
-  user_collection.findOne({_id:req.body.id}).select("following").populate({path:"following",select:'userName currentImageUrl'}).exec().then(async result=>{
 
-    res.status(res.statusCode).json({
-      data:result,
-      message: "get following ",
-      status: res.statusCode,
-      state:true
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
-exports.deleteFollow=(req,res)=>{
-  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{followers:req.body.theOtherPersonId}}).exec().then(async result=>{
-    user_collection.findOneAndUpdate({_id:req.body.theOtherPersonId},{$pull:{following:req.verified.user_auth._id}}).exec().then(async result=>{
-      res.status(res.statusCode).json({
-        message: "user was deleted",
-        state:true
-      });
-      }).catch(error=>{
-      res.status(res.statusCode).json({
-        message: error.message,
-        status: res.statusCode,
-        state:false
-      });
-    })
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
 
-}
-exports.getUserImages=(req,res)=>{
 
-      user_collection.findOne({_id: Mongoose.Types.ObjectId(req.body.userid)}).populate({path:"userProfileImagesUrl",select:'_id imageUrl',options:{sort: {date: -1}}}).select("userProfileImagesUrl").exec().then(result=>{
-        
-        res.status(res.statusCode).json({
-          data:result,
-          message: "images",
-          state:true
-        });
-      }).catch(error=>{
-    res.status(res.statusCode).json({
-      message: error.message,
-      status: res.statusCode,
-      state:false
-    });
-  })
-}
 exports.getPrivacy=(req,res)=>{
   user_collection.findOne({_id: Mongoose.Types.ObjectId(req.verified.user_auth._id)}).select("privacy").exec().then(result=>{
     res.status(res.statusCode).json({
@@ -823,7 +752,6 @@ exports.getPrivacy=(req,res)=>{
 
 }
 exports.updatePrivacy=(req,res)=>{
-  console.log(req.body)
   user_collection.findOneAndUpdate({_id: Mongoose.Types.ObjectId(req.verified.user_auth._id)},{$set:{privacy:req.body.privacy}}).select("privacy").exec().then(result=>{
     
     res.status(res.statusCode).json({

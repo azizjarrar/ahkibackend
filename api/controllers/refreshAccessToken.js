@@ -15,7 +15,6 @@ exports.getRefreshAccessToken=(req,res)=>{
             status: res.statusCode
         })
     }).catch(error => {
-        console.log(error)
         res.status(res.statusCode).json({
             message: error.message,
             status: res.statusCode
@@ -29,7 +28,6 @@ setNewRefreshAccessToken=async (RefreshAccessToken)=>{
     try {
 
         /**decode refresh token  */
-        console.log(RefreshAccessToken)
 
         decoded = await jwt.verify(RefreshAccessToken, process.env.secret_key_refrech_token)
         /******************search for the token in database ******************** */

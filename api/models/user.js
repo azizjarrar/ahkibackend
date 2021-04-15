@@ -13,15 +13,13 @@ const User = mongoose.Schema({
     biography:{type:String},
     age:{type:String,require:true},
     socketId:{type:String},
-    joindate:{type:Date,default:today},
+    joindate:{type:Date},
     email:{type:String},
     currentImageUrl:{type:String},//this is url
     currentImgId:{type:mongoose.Schema.Types.ObjectId,ref:'Images'},
-    userProfileImagesUrl:[{type:mongoose.Schema.Types.ObjectId,ref:'Images'}],//its not url its the all object i will change name later
     verified:{type:String},
     verifiedCode:{type:String},
-    following:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
-    followers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
+
     post:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
     likes:[{type:mongoose.Schema.Types.ObjectId,ref:'Post'}],
     likesToComment:[{type:mongoose.Schema.Types.ObjectId,ref:'Comments'}],

@@ -1,15 +1,14 @@
 const post_collection = require("../models/post");
 const user_collection = require("../models/user");
+const following_collection =require('../models/following')
 const fs = require("fs");
 
 const Mongoose = require("mongoose");
 exports.addPost = async (req, res) => {
     var post = new post_collection({
         _id: new Mongoose.Types.ObjectId(),
-        userNameOwnerOfPost:req.verified.user_auth._id,
-        comments:[],
+        OwnerOfPost:req.verified.user_auth._id,
         date:new Date(),
-        likes:[],
         postText:req.body.postText,
         postImage:req.file!=undefined?process.env.ip+req.file.path:undefined,
         anonyme:req.body.anonyme
@@ -25,42 +24,28 @@ exports.addPost = async (req, res) => {
         return 
       }
       post.save().then(async (result) => {
-        user_collection.findByIdAndUpdate({_id:req.verified.user_auth._id},{$push:{post:result._id}}).exec().then(result=>{
-            res.status(res.statusCode).json({
-                data: result,
-                message: "post  is online",
-                status: res.statusCode,
-              });
-        }).catch(error=>{
-            res.status(res.statusCode).json({
-                message: error.message,
-                status: res.statusCode,
-                state:false
-              });
-        })
+        res.status(res.statusCode).json({
+          data: result,
+          message: "post  is online",
+          status: res.statusCode,
+        });
 
+      }).catch(error=>{
+        res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        });
       })
     }
 exports.getCurrentUserPosts = async (req, res) => { 
-       user_collection.aggregate([
-         {$match:{_id:Mongoose.Types.ObjectId(req.verified.user_auth._id)}},
-        {$limit: 1},
-        {$lookup:{
-          from:'posts',
-          let: { postid:"$post"},    
-          pipeline : [
-            { $match: { $expr: { $in: [ "$_id", "$$postid" ] } }, },
-            {$project: {_id:1,userNameOwnerOfPost:1,postImage:1,date:1,postText:1,anonyme:1,comments:{$size:"$comments"},likes:{$size:"$likes"}}},
-            {$sort:{date:-1}},
-          ],
-          as:"posts"
-        }},
-        {$project: {posts:1}},
+       post_collection.find({OwnerOfPost:req.verified.user_auth._id}).populate({path:"OwnerOfPost",select:"_id currentImageUrl userName"}).sort({date: -1})
+       .exec()
+       .then(result=>{
 
-      ]).exec().then(result=>{
         res.status(res.statusCode).json({
-            data: result[0].posts,
-            message: "user posts",
+            data: result,
+            message: "post was  posts",
             status: res.statusCode,
           });
     }).catch(error=>{
@@ -72,96 +57,62 @@ exports.getCurrentUserPosts = async (req, res) => {
     })
 }
 exports.getOtherUserPosts = async (req, res) => {
-
-    user_collection.aggregate([
-    {$match:{ $and:[{_id:Mongoose.Types.ObjectId(req.body.userid)}]}},
-     {$limit: 1},
-     {$lookup:{
-       from:'posts',
-       let: { postid:"$post"},    
-       pipeline : [
-         { $match: { 
-           $expr:  {
-            $and: [
-               {$in: [ "$_id", "$$postid" ]},
-              { $eq: ['$anonyme', 'false'] }
-            ]
-             } 
-           
-          }, },
-         {$project: {_id:1,postImage:1,userNameOwnerOfPost:1,date:1,postText:1,anonyme:1,comments:{$size:"$comments"},likes:{$size:"$likes"}}},
-         {$sort:{date:-1}},
-       ],
-
-       as:"posts"
-     }},
-     {$project: {userName:1,currentImageUrl:1,posts:1}},
-
-   ]).exec().then(result=>{
-     console.log(result[0].posts)
-     res.status(res.statusCode).json({
-         data: result[0].posts,
-         message: "user posts",
-         status: res.statusCode,
-       });
- }).catch(error=>{
-
-     res.status(res.statusCode).json({
-         message: error.message,
-         status: res.statusCode,
-         state:false
-       });
- })
+          post_collection.find({OwnerOfPost:req.body.userid}).populate({path:"OwnerOfPost",select:"_id currentImageUrl userName"})
+          .exec()
+          .then(result=>{
+          res.status(res.statusCode).json({
+            data: result,
+            message: "user posts",
+            status: res.statusCode,
+          });
+          }).catch(error=>{
+          res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+            state:false
+          });
+          })
 }
 
 exports.deletePost=(req,res)=>{
-  user_collection.findOneAndUpdate({_id:req.verified.user_auth._id},{$pull:{post:req.body.postid}}).exec().then(()=>{
-    post_collection.findOneAndRemove({_id:req.body.postid,userNameOwnerOfPost:req.verified.user_auth._id}).exec().then((result=>{
-      if(result==null){
+  post_collection.findOneAndRemove({_id:req.body.postid,OwnerOfPost:req.verified.user_auth._id}).exec().then(result=>{
+    res.status(res.statusCode).json({
+      data: result,
+      message: "post was deleted",
+      status: res.statusCode,
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    });
+  })
+}
+exports.getFriendsPosts=async (req,res)=>{
+  following_collection.find({userid:req.verified.user_auth._id}).limit(5000).select("followingid").exec().then((result)=>{
+    let newarray=result.map(e=>{
+      return Promise.resolve(e.followingid)
+    })
+
+    Promise.all(newarray).then(data=>{
+      console.log(data)
+
+      post_collection.find({OwnerOfPost:{ $in: data }}).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).exec().then(result=>{
+        console.log(result)
         res.status(res.statusCode).json({
-          message: "access denied for user",
+          data: result,
           status: res.statusCode,
         });
-      }else{
-        user_collection.updateMany({_id:{$in:result.likes}},{$pull:{likes:req.body.postid}}).exec().then((res)=>{
-          //ma3andimna3ml
-        }).catch(e=>{
-          res.status(res.statusCode).json({
-            message: err.message,
-            status: res.statusCode,
-          });        
-        })
-      if(result.postImage!=undefined){
+    })
+    })
 
-        
-        try {
-          fs.unlinkSync(result.postImage.slice(result.postImage.indexOf("uploads"),455));
-          res.status(res.statusCode).json({
-            message: "post was deleted",
-            status: res.statusCode,
-          });
-        } catch (err) {
 
-          console.log(err)
-          res.status(res.statusCode).json({
-            message: err.message,
-            status: res.statusCode,
-          });
-      
-        }
-      }else{
-        
-        res.status(res.statusCode).json({
-          message: "post was deleted",
-          status: res.statusCode,
-        });
-      }
-    }
-    }))
   }).catch(error=>{
     res.status(res.statusCode).json({
       message: err.message,
       status: res.statusCode,
     });
   })
+
 }

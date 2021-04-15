@@ -1,16 +1,13 @@
 const following_collection =require('../models/following')
+const followers_collection =require('../models/followers')
+
 const notification_collection = require('../models/notification')
 const user_collection = require('../models/user')
 const Mongoose = require("mongoose");
-
-exports.getFollowingOfUser=(req,res)=>{
-
-}
-exports.unfollowUser=(req,res)=>{
-    following_collection.findOneAndDelete({userid:Mongoose.Types.ObjectId(req.verified.user_auth._id),followingid:Mongoose.Types.ObjectId(req.body.followingid)}).exec().then((result)=>{
-        res.status(res.statusCode).json({
-            message: "unfollow",
-            state:3,
+exports.countFollowingOfUser=(req,res)=>{
+    following_collection.countDocuments({userid:req.body.userid}).exec().then(result=>{
+            res.status(res.statusCode).json({
+            count: result,
             status: res.statusCode,
             });
     }).catch(error=>{
@@ -19,21 +16,56 @@ exports.unfollowUser=(req,res)=>{
             status: res.statusCode,
             });
     })
+}
+exports.getFollowingOfUser=(req,res)=>{
+    following_collection.find({userid:req.body.userid}).populate({path:"followingid",select:"_id currentImageUrl userName",options:{sort: {date: -1}}}).exec().then((result)=>{
+        res.status(res.statusCode).json({
+            data: result,
+            status: res.statusCode,
+            });
+    }).catch(error=>{
+        res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+            });
+    })
+}
+exports.unfollowUser=(req,res)=>{
+    following_collection.findOneAndDelete({userid:Mongoose.Types.ObjectId(req.verified.user_auth._id),followingid:Mongoose.Types.ObjectId(req.body.followingid)}).exec().then((result)=>{
+        followers_collection.findOneAndRemove(({userid:req.body.followingid,followersid:req.verified.user_auth._id})).exec().then(result=>{
+            res.status(res.statusCode).json({
+                message: "unfollow",
+                state:3,
+                status: res.statusCode,
+                });
+        }).catch(error=>{
+            res.status(res.statusCode).json({
+                message: error.message,
+                status: res.statusCode,
+            });
+        })
+    }).catch(error=>{
+        res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+        });
+    })
 
 }
 exports.removeFollowPending=async (req,res)=>{
     following_collection.findOneAndDelete({userid:Mongoose.Types.ObjectId(req.verified.user_auth._id),followingid:Mongoose.Types.ObjectId(req.body.followingid)}).exec().then(async (result)=>{
         notification_collection.findOneAndDelete({from:Mongoose.Types.ObjectId(req.verified.user_auth._id),to:Mongoose.Types.ObjectId(req.body.followingid),type:"follow"}).exec().then(result=>{
-
+            res.status(res.statusCode).json({
+                message: "follow Pendding removed",
+                state:3,
+                status: res.statusCode,
+                });
        }).catch(error=>{
-           console.log(error)
-       });
-
         res.status(res.statusCode).json({
-            message: "follow Pendding removed",
-            state:3,
+            message: error.message,
             status: res.statusCode,
             });
+       });
     }).catch(error=>{
         res.status(res.statusCode).json({
             message: error.message,
@@ -94,7 +126,6 @@ exports.followUser=(req,res)=>{
                 date:today
              })
              follwing.save().then((result=>{
-      
                 notification.save().then((result)=>{
                     res.status(res.statusCode).json({
                         message: "mkch mffolowih",
@@ -102,7 +133,6 @@ exports.followUser=(req,res)=>{
                         status: res.statusCode,
                         });
                 }).catch(error=>{
-                    console.log(error)
                     res.status(res.statusCode).json({
                     message: error.message,
                     status: res.statusCode,
@@ -127,23 +157,31 @@ exports.followUser=(req,res)=>{
              const notification = new notification_collection({
                 _id: new Mongoose.Types.ObjectId(),
                 text:req.body.text,
-                type:"follow",
+                type:"follow directly",
                 from:req.verified.user_auth._id,
                 to:req.body.followingid,
                 date:today
              })
+             const followers=  new followers_collection({
+                _id: new Mongoose.Types.ObjectId(),
+                userid:req.body.followingid,
+                followersid:req.verified.user_auth._id,
+                followersince:today,
+             })
              follwing.save().then((result=>{
-                res.status(res.statusCode).json({
-                    message: "rak mfollowih",
-                    state:2,
-                    status: res.statusCode,
-                    });
-                notification.save().then((result)=>{
-                }).catch(error=>{
-                    res.status(res.statusCode).json({
-                    message: error.message,
-                    status: res.statusCode,
-                    });
+                followers.save().then(result=>{
+                    notification.save().then((result)=>{
+                        res.status(res.statusCode).json({
+                            message: "rak mfollowih",
+                            state:2,
+                            status: res.statusCode,
+                            });
+                            }).catch(error=>{
+                        res.status(res.statusCode).json({
+                        message: error.message,
+                        status: res.statusCode,
+                        });
+                    })
                 })
              })).catch(error=>{
                     res.status(res.statusCode).json({
@@ -157,15 +195,30 @@ exports.followUser=(req,res)=>{
 
 }
 exports.acceptfollow=(req,res)=>{
-    following_collection.findOneAndUpdate({userid:Mongoose.Types.ObjectId(req.body.followingid),followingid:Mongoose.Types.ObjectId(req.verified.user_auth._id)},
+    var today = new Date()
+
+    following_collection.findOneAndUpdate({userid:Mongoose.Types.ObjectId(req.body.theOtherPersonId),followingid:Mongoose.Types.ObjectId(req.verified.user_auth._id)},
     {$set:{panding:false}}
     ).exec().then((result)=>{
-        notification_collection.findOneAndDelete({from:Mongoose.Types.ObjectId(req.body.followingid),to:Mongoose.Types.ObjectId(req.verified.user_auth._id),type:"follow"}).exec().then(result=>{})
+        notification_collection.findOneAndDelete({from:Mongoose.Types.ObjectId(req.body.theOtherPersonId),to:Mongoose.Types.ObjectId(req.verified.user_auth._id),type:"follow"}).exec().then(result=>{})
+        const followers=  new followers_collection({
+            _id: new Mongoose.Types.ObjectId(),
+            userid:req.verified.user_auth._id,
+            followersid:req.body.theOtherPersonId,
+            followersince:today,
+         })
+         followers.save().then(result=>{
+            res.status(res.statusCode).json({
+                message: "now you can follow user",
+                status: res.statusCode,
+                });
+         }).catch(error=>{
+            res.status(res.statusCode).json({
+                message: error.message,
+                status: res.statusCode,
+                });
+         })
 
-        res.status(res.statusCode).json({
-            message: "now you can follow user",
-            status: res.statusCode,
-            });
     }).catch(error=>{
         res.status(res.statusCode).json({
         message: error.message,

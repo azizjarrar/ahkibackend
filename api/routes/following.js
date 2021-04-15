@@ -9,4 +9,5 @@ router.post('/checkIffollow',check_auth,following_controler.checkIffollow)
 router.post('/removeFollowPending',check_auth,following_controler.removeFollowPending)
 router.post('/acceptfollow',check_auth,following_controler.acceptfollow)
 router.post('/deniedfollow',check_auth,following_controler.deniedfollow)
+router.post('/countFollowingOfUser',check_auth,following_controler.countFollowingOfUser)
 module.exports = router

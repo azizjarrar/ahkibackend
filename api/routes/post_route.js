@@ -60,5 +60,6 @@ router.post('/addPost',check_auth ,checkUploadPath,uploadMulter.single('postImag
 router.post('/getCurrentUserPosts',check_auth,post_controller.getCurrentUserPosts)
 router.post('/getOtherUserPosts', post_controller.getOtherUserPosts)
 router.post('/deletePost', check_auth,post_controller.deletePost)
+router.post('/getFriendsPosts', check_auth,post_controller.getFriendsPosts)
 
 module.exports = router

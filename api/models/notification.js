@@ -8,6 +8,5 @@ const notification = mongoose.Schema({
     date:{type:Date}
 })
 
-notification.index({from: 1, to: 1,type:1}, { unique: true });
 
 module.exports=mongoose.model('notification',notification)

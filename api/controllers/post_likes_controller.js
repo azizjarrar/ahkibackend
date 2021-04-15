@@ -1,15 +1,15 @@
-const image_likes_collection = require('../models/imageLikes')
-const image_Comments_Likes_collection = require('../models/imageCommentsLikes')
+const post_likes_collection = require("../models/postLikes");
+const post_Comments_Likes_collection = require('../models/postCommentsLikes')
 const Mongoose = require("mongoose");
 
-exports.addLikeToImage=(req,res)=>{
-  var imageLikes = new image_likes_collection({
+exports.addLikeToPost = async (req, res) => {
+  var postLikes = new post_likes_collection({
     _id:new Mongoose.Types.ObjectId(),
-    likedImage:req.body.imageid,// id mte3ek
-    idOfWhoLikedImage:req.verified.user_auth._id,// id li mta3bou
+    likedPost:req.body.postid,// id mte3ek
+    idOfWhoLikedPost:req.verified.user_auth._id,// id li mta3bou
     date:new Date()
   });
-  var error = imageLikes.validateSync();
+  var error = postLikes.validateSync();
   if (error != undefined) {
     res.status(res.statusCode).json({
       message: error.message,
@@ -18,9 +18,9 @@ exports.addLikeToImage=(req,res)=>{
     });
     return 
   }
-  imageLikes.save().then(async (imageLikes) => {
+  postLikes.save().then(async (postLikes) => {
     res.status(res.statusCode).json({
-      data: imageLikes,
+      data: postLikes,
       status: res.statusCode,
       state:false
     });
@@ -31,9 +31,26 @@ exports.addLikeToImage=(req,res)=>{
         state:false
       })
     )
+
 }
-exports.checklikeToImage=(req,res)=>{
-  image_likes_collection.findOne({likedImage:req.body.imageid,idOfWhoLikedImage:req.verified.user_auth._id}).then(async (imageLikes) => {
+exports.checklikeToPost=(req,res)=>{
+  post_likes_collection.findOne({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then((postLikes) => {
+    res.status(res.statusCode).json({
+      data: postLikes,
+      status: res.statusCode,
+      state:false
+    });
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      })
+    }
+  )
+}
+exports.dislikePost=(req,res)=>{
+  post_likes_collection.findOneAndRemove({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then(async (postLikes) => {
     res.status(res.statusCode).json({
       data: imageLikes,
       status: res.statusCode,
@@ -48,24 +65,8 @@ exports.checklikeToImage=(req,res)=>{
     }
   )
 }
-exports.dislikeImage=(req,res)=>{
-  image_likes_collection.findOneAndRemove({likedImage:req.body.imageid,idOfWhoLikedImage:req.verified.user_auth._id}).then(async (imageLikes) => {
-    res.status(res.statusCode).json({
-      data: imageLikes,
-      status: res.statusCode,
-      state:false
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-        message: error.message,
-        status: res.statusCode,
-        state:false
-      })
-    }
-  )
-}
-exports.countImageLikes=(req,res)=>{
-  image_likes_collection.countDocuments({likedImage:req.body.imageid}).exec().then(result=>{
+exports.countPostLikes=(req,res)=>{
+  post_likes_collection.countDocuments({likedPost:req.body.postid}).exec().then(result=>{
     res.status(res.statusCode).json({
         count: result,
         status: res.statusCode,
@@ -77,8 +78,8 @@ exports.countImageLikes=(req,res)=>{
         });
       })
 }
-exports.getLikestUserNameFromImage=(req,res)=>{
-  image_likes_collection.find({likedImage:req.body.imageid}).populate({path:"idOfWhoLikedImage",select: '_id currentImageUrl userName'}).then(async (imageLikes) => {
+exports.getLikestUserNameFromPost=(req,res)=>{
+  post_likes_collection.find({likedPost:req.body.postid}).populate({path:"idOfWhoLikedPost",select: '_id currentImageUrl userName'}).then(async (imageLikes) => {
     res.status(res.statusCode).json({
       data: imageLikes,
       status: res.statusCode,
@@ -93,13 +94,11 @@ exports.getLikestUserNameFromImage=(req,res)=>{
     }
   )
 }
-
-/*********************************
 /******************************************************************/
-/*******************image Comments Section****************************/
+/*******************post Comments Section****************************/
 /******************************************************************/
-exports.addLikeToCommentImage=(req,res)=>{
-  var commentsLikes = new image_Comments_Likes_collection({
+exports.addLikeToComment=(req,res)=>{
+  var commentsLikes = new post_Comments_Likes_collection({
     _id:new Mongoose.Types.ObjectId(),
     likedComment:req.body.commentid,// id mte3ek
     idOfWhoLikedComment:req.verified.user_auth._id,// id li mta3bou
@@ -128,8 +127,8 @@ exports.addLikeToCommentImage=(req,res)=>{
       })
     )
 }
-exports.checklikeToCommentImage=(req,res)=>{
-  image_Comments_Likes_collection.findOne({likedComment:req.body.commentid,idOfWhoLikedComment:req.verified.user_auth._id}).then(async (CommentLikes) => {
+exports.checklikeToComment=(req,res)=>{
+  post_Comments_Likes_collection.findOne({likedComment:req.body.commentid,idOfWhoLikedComment:req.verified.user_auth._id}).then(async (CommentLikes) => {
     res.status(res.statusCode).json({
       data: CommentLikes,
       status: res.statusCode,
@@ -144,8 +143,9 @@ exports.checklikeToCommentImage=(req,res)=>{
     }
   )
 }
-exports.dislikeToCommentImage=(req,res)=>{
-  image_Comments_Likes_collection.findOneAndRemove({likedComment:req.body.commentid,idOfWhoLikedComment:req.verified.user_auth._id}).then(async (CommentLikes) => {
+
+exports.dislikeToComment=(req,res)=>{
+  post_Comments_Likes_collection.findOneAndRemove({likedComment:req.body.commentid,idOfWhoLikedComment:req.verified.user_auth._id}).then(async (CommentLikes) => {
     res.status(res.statusCode).json({
       data: CommentLikes,
       status: res.statusCode,
@@ -160,8 +160,8 @@ exports.dislikeToCommentImage=(req,res)=>{
     }
   )
 }
-exports.countImageCommentsLikes=(req,res)=>{
-  image_Comments_Likes_collection.countDocuments({likedComment:req.body.commentid}).exec().then(result=>{
+exports.countPostCommentsLikes=(req,res)=>{
+  post_Comments_Likes_collection.countDocuments({likedComment:req.body.commentid}).exec().then(result=>{
     res.status(res.statusCode).json({
         count: result,
         status: res.statusCode,
@@ -173,9 +173,8 @@ exports.countImageCommentsLikes=(req,res)=>{
         });
       })
 }
-
-exports.getLikestUserNameFromCommentImage=(req,res)=>{
-  image_Comments_Likes_collection.find({likedComment:req.body.commentid}).populate({path:"idOfWhoLikedImage",select: '_id currentImageUrl userName'}).then(async (CommentLikes) => {
+exports.getLikestUserNameFromComment=(req,res)=>{
+  post_Comments_Likes_collection.find({likedComment:req.body.commentid}).populate({path:"idOfWhoLikedComment",select: '_id currentImageUrl userName'}).then(async (CommentLikes) => {
     res.status(res.statusCode).json({
       data: CommentLikes,
       status: res.statusCode,
@@ -190,3 +189,5 @@ exports.getLikestUserNameFromCommentImage=(req,res)=>{
     }
   )
 }
+//postid
+//commentid
