@@ -34,12 +34,39 @@ exports.addComment=(req,res)=>{
       })
   }
 exports.getComments=(req,res)=>{
-  comments_collection.find({postid:Mongoose.Types.ObjectId(req.body.postid)}).populate({path:"commentOwner",select:"_id currentImageUrl userName"}).sort({date: -1}).skip(req.body.skip).limit(3).exec().then(result=>{
-    res.status(res.statusCode).json({
-      data:result,
-      status: res.statusCode,
-      state:false
-    });
+  comments_collection.find({postid:Mongoose.Types.ObjectId(req.body.postid)}).populate({path:"postid",select:"allowAnonymeComments"}).populate({path:"commentOwner",select:"_id currentImageUrl userName"}).sort({date: -1}).skip(req.body.skip).limit(3).exec().then(result=>{
+
+    const newCommentsArray=result.map(async (data)=>{
+      if(data.postid.allowAnonymeComments==true && data.anonyme==true){
+        const objectComment={
+          _id:data._id,
+          commentOwner:{
+            _id:data.commentOwner._id,
+            userName:"anonym",
+            currentImageUrl:"anonym"
+          },
+          postid:data.postid,
+          date:data.date,
+          commentText:data.commentText,
+          anonyme:data.anonyme
+        }
+
+        return Promise.resolve(objectComment)
+      }else{
+
+        return Promise.resolve(data)
+
+      }
+        //return anAsyncmap({...data})
+    })
+    Promise.all(newCommentsArray).then(newdataArray=>{
+      res.status(res.statusCode).json({
+        data:newdataArray,
+        status: res.statusCode,
+        state:false
+      });
+    })
+
   }).catch(error=>{
     res.status(res.statusCode).json({
       message: error.message,
@@ -50,7 +77,6 @@ exports.getComments=(req,res)=>{
 }
 
 exports.deleteComment=(req,res)=>{
-  console.log(req.body)
   comments_collection.findOneAndRemove({commentOwner:req.verified.user_auth._id,_id:req.body.commentid}).exec().then(result=>{
     res.status(res.statusCode).json({
       message: "comment deleted",

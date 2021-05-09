@@ -16,8 +16,14 @@ const following_route=require('./api/routes/following')
 const refreshAccessToken_route = require('./api/routes/refreshAccessToken')
 const post_like_route=require('./api/routes/post_likes')
 const getnotifications_router=require('./api/routes/notification')
+/******************************************************************/
+const topic_router=require('./api/routes/dailyTopic')
+/**************************************************/
+const chat_router=require('./api/routes/chat')
+
 const app = express()
 const morgan = require('morgan')
+const cors =require('cors')
 mongoose.connect(
   'mongodb://localhost:27017/ahki',
   { useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true },
@@ -30,21 +36,23 @@ mongoose.connect(
       console.log('connection')
     }
     mongoose.set('useFindAndModify', false)
-    app.use((req, res, next) => {
-      res.header('Access-Control-Allow-Origin', '*')
-      res.header(
-        'Access-Control-Allow-Headers',
-        'Origin,X-Requested-With,Content-Type,Accept,Authorization'
-      )
-      if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT,POST,PATCH,DELETE,GET')
-        return res.status(200).json({})
+ 
+    var whitelist = ['http://127.0.0.1:5010/','http://localhost:3000']
+    var corsOptions = {
+      credentials: true, 
+      origin: function(origin, callback) {
+        if (whitelist.indexOf(origin) !== -1) {
+          callback(null, true)
+        } else {
+          callback(null, true)
+        }
       }
-      next()
-    })
+    }
+    
+    app.use(cors(corsOptions));
 
-    app.use(bodyparser.urlencoded({ extended: true }))
-    app.use(bodyparser.json())
+    app.use(express.urlencoded({ extended: true }))
+    app.use(express.json())
     app.use(morgan('dev'))
     app.use('/uploads',express.static('./uploads'))
     app.use('/user', user_route)
@@ -58,6 +66,8 @@ mongoose.connect(
     app.use('/followers', follower_route)
     app.use('/following', following_route)
     app.use('/notification',getnotifications_router)
+    app.use('/topic',topic_router)
+    app.use('/chat',chat_router)
     /***************for sending pics in random chat*********************/
 
     app.use((req, res) => {

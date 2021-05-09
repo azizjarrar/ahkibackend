@@ -27,8 +27,8 @@ const storageMulter = multer.diskStorage({
     }
 })
 const fileFilter = (req,file,cb)=>{
-
-    if(file.mimetype==='image/jpeg' || file.mimetype==='image/png'){
+    
+    if(file.mimetype==="video/mp4"|| file.mimetype==='image/jpeg' || file.mimetype==='image/png'){
         cb(null,true)
     }else{
         cb(new Error('type invalide'),false)
@@ -57,9 +57,11 @@ function checkUploadPath(req, res, next) {
 /*********************************************************************************/
 /*********************************************************************************/
 router.post('/addPost',check_auth ,checkUploadPath,uploadMulter.single('postImage'),post_controller.addPost)
+router.post('/addDailyTopicPost',check_auth ,checkUploadPath,uploadMulter.single('postImage'),post_controller.addDailyTopicPost)
 router.post('/getCurrentUserPosts',check_auth,post_controller.getCurrentUserPosts)
 router.post('/getOtherUserPosts', post_controller.getOtherUserPosts)
 router.post('/deletePost', check_auth,post_controller.deletePost)
 router.post('/getFriendsPosts', check_auth,post_controller.getFriendsPosts)
+router.post('/getTodayTopicPost',post_controller.getTodayTopicPost)
 
 module.exports = router

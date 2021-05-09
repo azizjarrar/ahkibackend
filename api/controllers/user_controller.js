@@ -692,9 +692,20 @@ exports.updateEmail=(req,res)=>{
 
 
 exports.getrandomUsers=(req,res)=>{
+  let oldUsers=[...req.body.oldUsers,req.verified.user_auth._id]
+
   user_collection.aggregate([{ $sample: { size: 6 } },{$project: { userName:1,currentImageUrl:1}} ]).exec().then(result=>{
+    const newArrayOfRandomUsers=result
+
+    for(let i=0;i<oldUsers.length;i++){
+      for(let j=0;j<result.length;j++){
+          if(result[j]._id==oldUsers[i]){
+            newArrayOfRandomUsers.splice(j,1)
+        }
+      }
+    }
   res.status(res.statusCode).json({
-    data:result,
+    data:newArrayOfRandomUsers,
     message: "random users ",
     status: res.statusCode,
     state:true
@@ -710,7 +721,8 @@ exports.getrandomUsers=(req,res)=>{
 exports.SearchUserByUserName=(req,res)=>{
   let searchData=req.body.searchUserName
   if(req.body.searchUserName.length>0){
-    user_collection.find({ userName: { $regex: `.*${searchData}.*`}}).select('userName currentImageUrl').exec().then(async result=>{
+    //$nin
+    user_collection.find({ userName: { $regex: `.*${searchData}.*`},_id:{$ne:req.verified.user_auth._id}}).select('userName currentImageUrl').exec().then(async result=>{
       res.status(res.statusCode).json({
         data:result,
         message: "search users ",

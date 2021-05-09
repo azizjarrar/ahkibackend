@@ -5,7 +5,7 @@ const postComments = mongoose.Schema({
     postid:{type:mongoose.Schema.Types.ObjectId,ref:'Post'},
     commentText:{type:String},
     date:{type:Date,require:true},
-    anonyme:{type:String}
+    anonyme:{type:Boolean}
 
 
 

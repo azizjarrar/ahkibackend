@@ -31,7 +31,9 @@ const User = mongoose.Schema({
     resetPassword:{ExpiresIn:{Type:Date},code:{Type:String}},
     changeEmail:{ExpiresIn:{Type:Date},newEmail:{Type:String},code:{Type:String}},
     privacy:{type:String},
-    pendingFollowers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}]
+    pendingFollowers:[{type:mongoose.Schema.Types.ObjectId,ref:'User'}],
+
+    lastTimeRespondedToTopic:{type:Date}
 })
 User.index({ userName: "text"}); // schema level
 User.on('index', error => {

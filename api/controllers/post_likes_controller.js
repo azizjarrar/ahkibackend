@@ -34,20 +34,22 @@ exports.addLikeToPost = async (req, res) => {
 
 }
 exports.checklikeToPost=(req,res)=>{
-  post_likes_collection.findOne({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then((postLikes) => {
-    res.status(res.statusCode).json({
-      data: postLikes,
-      status: res.statusCode,
-      state:false
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-        message: error.message,
+    post_likes_collection.findOne({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then((postLikes) => {
+      res.status(res.statusCode).json({
+        data: postLikes,
         status: res.statusCode,
         state:false
-      })
-    }
-  )
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        })
+      }
+    )
+
+
 }
 exports.dislikePost=(req,res)=>{
   post_likes_collection.findOneAndRemove({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then(async (postLikes) => {
@@ -79,6 +81,7 @@ exports.countPostLikes=(req,res)=>{
       })
 }
 exports.getLikestUserNameFromPost=(req,res)=>{
+
   post_likes_collection.find({likedPost:req.body.postid}).populate({path:"idOfWhoLikedPost",select: '_id currentImageUrl userName'}).then(async (imageLikes) => {
     res.status(res.statusCode).json({
       data: imageLikes,
@@ -174,6 +177,7 @@ exports.countPostCommentsLikes=(req,res)=>{
       })
 }
 exports.getLikestUserNameFromComment=(req,res)=>{
+
   post_Comments_Likes_collection.find({likedComment:req.body.commentid}).populate({path:"idOfWhoLikedComment",select: '_id currentImageUrl userName'}).then(async (CommentLikes) => {
     res.status(res.statusCode).json({
       data: CommentLikes,

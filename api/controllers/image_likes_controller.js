@@ -175,7 +175,7 @@ exports.countImageCommentsLikes=(req,res)=>{
 }
 
 exports.getLikestUserNameFromCommentImage=(req,res)=>{
-  image_Comments_Likes_collection.find({likedComment:req.body.commentid}).populate({path:"idOfWhoLikedImage",select: '_id currentImageUrl userName'}).then(async (CommentLikes) => {
+  image_Comments_Likes_collection.find({likedComment:req.body.commentid}).populate({path:"idOfWhoLikedComment",select: '_id currentImageUrl userName'}).then(async (CommentLikes) => {
     res.status(res.statusCode).json({
       data: CommentLikes,
       status: res.statusCode,

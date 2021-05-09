@@ -1,17 +1,26 @@
 const post_collection = require("../models/post");
-const user_collection = require("../models/user");
+const dailyTopic_collection = require("../models/dailyTopic");
 const following_collection =require('../models/following')
 const fs = require("fs");
 
 const Mongoose = require("mongoose");
 exports.addPost = async (req, res) => {
+  var TextVideoOrImage //if true is video if false is image
+  //    postVideo:{type:String,require:true},
+    if(req.file!=undefined){
+      TextVideoOrImage =req.file.mimetype=="video/mp4"
+    }else{
+      TextVideoOrImage=undefined
+    }
     var post = new post_collection({
         _id: new Mongoose.Types.ObjectId(),
         OwnerOfPost:req.verified.user_auth._id,
         date:new Date(),
         postText:req.body.postText,
-        postImage:req.file!=undefined?process.env.ip+req.file.path:undefined,
-        anonyme:req.body.anonyme
+        postImage:req.file!=undefined && TextVideoOrImage==false?process.env.ip+req.file.path:undefined,
+        postVideo:req.file!=undefined && TextVideoOrImage==true?process.env.ip+req.file.path:undefined,
+        anonyme:req.body.anonyme,
+        allowAnonymeComments:req.body.allowAnonymeComments
       });
     
       var error = post.validateSync();
@@ -42,7 +51,6 @@ exports.getCurrentUserPosts = async (req, res) => {
        post_collection.find({OwnerOfPost:req.verified.user_auth._id}).populate({path:"OwnerOfPost",select:"_id currentImageUrl userName"}).sort({date: -1})
        .exec()
        .then(result=>{
-
         res.status(res.statusCode).json({
             data: result,
             message: "post was  posts",
@@ -57,7 +65,7 @@ exports.getCurrentUserPosts = async (req, res) => {
     })
 }
 exports.getOtherUserPosts = async (req, res) => {
-          post_collection.find({OwnerOfPost:req.body.userid}).populate({path:"OwnerOfPost",select:"_id currentImageUrl userName"})
+          post_collection.find({OwnerOfPost:req.body.userid}).populate({path:"OwnerOfPost",select:"_id currentImageUrl userName"}).sort({date: -1})
           .exec()
           .then(result=>{
           res.status(res.statusCode).json({
@@ -96,10 +104,8 @@ exports.getFriendsPosts=async (req,res)=>{
     })
 
     Promise.all(newarray).then(data=>{
-      console.log(data)
 
       post_collection.find({OwnerOfPost:{ $in: data }}).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).exec().then(result=>{
-        console.log(result)
         res.status(res.statusCode).json({
           data: result,
           status: res.statusCode,
@@ -114,5 +120,85 @@ exports.getFriendsPosts=async (req,res)=>{
       status: res.statusCode,
     });
   })
+}
+exports.getTodayTopicPost=async (req,res)=>{
+  dailyTopic_collection.find({}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{
+    post_collection.find({DailyTopic:resultTodayTopic[0]._id}).limit(5000).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).sort({date: -1}).exec().then((result)=>{
+      newresult=result.map(data=>{
+        if(data.anonyme==false){
+          return Promise.resolve(data)
+
+        }else{
+          const objectComment={
+            _id:data._id,
+            OwnerOfPost:{
+              _id:data.OwnerOfPost._id,
+              userName:"anonym",
+              currentImageUrl:"anonym"
+            },
+            postText:data.postText,
+            date:data.date,
+            allowAnonymeComments:data.allowAnonymeComments,
+            anonyme:data.anonyme
+          }
+          return Promise.resolve(objectComment)
+        }
+      })
+      Promise.all(newresult).then(newdata=>{
+        res.status(res.statusCode).json({
+          data: newdata,
+          status: res.statusCode,
+        });
+      })
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+      });
+    })
+  }).catch(error=>{
+      res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode
+      })  
+  })
 
 }
+/************************************************/
+exports.addDailyTopicPost = async (req, res) => {
+
+  var post = new post_collection({
+      _id: new Mongoose.Types.ObjectId(),
+      OwnerOfPost:req.verified.user_auth._id,
+      date:new Date(),
+      postText:req.body.postText,
+      postImage:req.file!=undefined?process.env.ip+req.file.path:undefined,
+      anonyme:req.body.anonyme,
+      allowAnonymeComments:req.body.allowAnonymeComments,
+      DailyTopic:req.body.DailyTopicid
+    });
+
+    var error = post.validateSync();
+    if (error != undefined) {
+      res.status(res.statusCode).json({
+        message: "invalid post",
+        status: res.statusCode,
+        state:false
+      });
+      return 
+    }
+    post.save().then(async (result) => {
+      res.status(res.statusCode).json({
+        data: result,
+        message: "post  is online",
+        status: res.statusCode,
+      });
+
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }

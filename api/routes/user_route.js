@@ -13,7 +13,7 @@ const crypto = require('crypto')
 /********************profile picture multer*********************** */
 const storageMulter = multer.diskStorage({
     destination:(req,file,cb)=>{
-        cb(null,'./uploads/'+req.verified.user_auth._id+"/Images/")
+        cb(null,'./uploads/'+req.verified.user_auth._id+"/images/")
     },
     filename:(req,file,cb)=>{
         crypto.randomBytes(16, (err, buf) => {
@@ -37,7 +37,7 @@ const fileFilter = (req,file,cb)=>{
 const uploadMulter = multer({fileFilter:fileFilter,storage:storageMulter})
 /**************************check if file exist***************************************/
 function checkUploadPath(req, res, next) {
-        fs.exists('./uploads/'+req.verified.user_auth._id+"/Images/", function(exists) {
+        fs.exists('./uploads/'+req.verified.user_auth._id+"/images/", function(exists) {
        if(exists) {
          next();
        }
@@ -73,7 +73,7 @@ router.post('/SetNewPassword',user_controler.SetNewPassword)
 router.post('/updateEmailSendCode',check_auth,user_controler.updateEmailSendCode)
 router.post('/updateEmail',check_auth,user_controler.updateEmail)
 router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)
-router.post('/SearchUserByUserName',user_controler.SearchUserByUserName)
+router.post('/SearchUserByUserName',check_auth,user_controler.SearchUserByUserName)
 router.post('/getrandomUsers',check_auth,user_controler.getrandomUsers)
 router.post('/getPrivacy',check_auth,user_controler.getPrivacy)
 router.post('/updatePrivacy',check_auth,user_controler.updatePrivacy)

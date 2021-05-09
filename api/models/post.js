@@ -5,7 +5,10 @@ const Post = mongoose.Schema({
     date:{type:Date,require:true},
     postText:{type:String,require:true},
     postImage:{type:String,require:true},
-    anonyme:{type:String}
+    postVideo:{type:String,require:true},
+    anonyme:{type:Boolean},
+    allowAnonymeComments:{type:Boolean},
+    DailyTopic:{type:mongoose.Schema.Types.ObjectId,ref:'DailyTopic'}
 })
 
 module.exports=mongoose.model('Post',Post)
