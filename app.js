@@ -68,6 +68,7 @@ mongoose.connect(
     app.use('/notification',getnotifications_router)
     app.use('/topic',topic_router)
     app.use('/chat',chat_router)
+    
     /***************for sending pics in random chat*********************/
 
     app.use((req, res) => {
