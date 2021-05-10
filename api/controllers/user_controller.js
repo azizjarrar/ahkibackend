@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
           dialCode,
           tel,
           age,
-          verified:true,
+          verified:false,
           privacy:"private",
           joindate:today
         });
@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
         password,
         age,
         email,
-        verified:true,
+        verified:false,
         privacy:"private",
         joindate:today
       });
@@ -300,7 +300,6 @@ exports.getUserData=(req,res)=>{
   }
 }
 exports.getotherUsersData=async (req,res)=>{
-
         try{
           user_collection.aggregate([{$match:{ _id: Mongoose.Types.ObjectId(req.params.id)}},{$limit: 1},{$project: {privacy:1, currentImgId:1,privacy:1,currentImageUrl:1,biography : 1,userName:1,firstname:1,lastname:1}}]).exec().then(result=>{
 

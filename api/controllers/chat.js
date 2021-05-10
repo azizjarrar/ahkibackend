@@ -17,6 +17,7 @@ exports.addMessage=(req,res)=>{
             firstUser:req.body.receiver,
             secoundUser:req.verified.user_auth._id,
             LastMessage:today,
+
         })
     }
     var error = ChatProfile.validateSync();
@@ -30,7 +31,10 @@ exports.addMessage=(req,res)=>{
                 _id: new Mongoose.Types.ObjectId(),
                 date:today,
                 users:[req.verified.user_auth._id,req.body.receiver],
-                message:req.body.message
+                message:req.body.message,
+                seen:false,
+                sender:req.verified.user_auth._id,
+                reciver:req.body.receiver,
             })
             var error = chat.validateSync();
             if (error != undefined) {
@@ -38,6 +42,7 @@ exports.addMessage=(req,res)=>{
                 message: "invalid chat",
                 status: res.statusCode,
                 state:false
+                
               });
               return 
             }
@@ -61,12 +66,16 @@ exports.addMessage=(req,res)=>{
         })
     }else{
         if(req.body.receiver!=undefined){
-            ChatProfile_collection.findOneAndUpdate({uniqueidForBothUsers:idBothUsers},{$set:{date:today,LastMessage:today}}).then(data=>{
+            ChatProfile_collection.findOneAndUpdate({uniqueidForBothUsers:idBothUsers},{$set:{LastMessage:today}}).then(data=>{
                 chat = new chat_collection({
                     _id: new Mongoose.Types.ObjectId(),
                     date:today,
                     users:[req.verified.user_auth._id,req.body.receiver],
-                    message:req.body.message
+                    message:req.body.message,
+                    seen:false,
+                    sender:req.verified.user_auth._id,
+                    reciver:req.body.receiver,
+
                 })
                 var error = chat.validateSync();
                 if (error != undefined) {
@@ -108,11 +117,19 @@ exports.addMessage=(req,res)=>{
     
 }
 exports.getMessagesOfCurrentconversation=(req,res)=>{
-    chat_collection.find( {users:{ $all : [req.verified.user_auth._id,req.body.secondUser]}}).sort({ date: 1 }).limit(20).exec().then(data=>{
-        res.status(res.statusCode).json({
-            data: data,
-            status: res.statusCode
-        })  
+    chat_collection.find( {users:{ $all : [req.verified.user_auth._id,req.body.secondUser]}}).sort({ date: -1 }).skip(req.body.skip).limit(20).exec().then(olddata=>{
+        chat_collection.updateMany( {users:{ $all : [req.verified.user_auth._id,req.body.secondUser]}},{$set:{seen:true}},{new: true}).exec().then(newData=>{
+
+            res.status(res.statusCode).json({
+                data: olddata,
+                status: res.statusCode
+            })  
+        }).catch(error=>{
+            res.status(res.statusCode).json({
+                message: error.message,
+                status: res.statusCode
+            })  
+        })
     }).catch(error=>{
         res.status(res.statusCode).json({
             message: error.message,
@@ -121,15 +138,30 @@ exports.getMessagesOfCurrentconversation=(req,res)=>{
     })
 }
 exports.getUserWhoChatWith=(req,res)=>{
-    
-    ChatProfile_collection.find({$or:[{firstUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)},{secoundUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)}]})
-    .populate({path:"firstUser",select:'_id userName currentImageUrl'}).populate({path:"secoundUser",select:'_id userName currentImageUrl'})
-    .sort({LastMessage:-1}).exec().then(data=>{
-        console.log(data)
+    let messageWithSeenState=[]
+
+    ChatProfile_collection.find({$or:[{firstUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)},{secoundUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)}]}).populate({path:"firstUser",select:'_id userName currentImageUrl'}).populate({path:"secoundUser",select:'_id userName currentImageUrl'})
+    .sort({LastMessage:-1}).exec().then(async dataOfiUsersWhoChatWith=>{
+        for(let i =0;i<dataOfiUsersWhoChatWith.length;i++){
+            let senderid=""
+            if(dataOfiUsersWhoChatWith[i].firstUser._id.equals(req.verified.user_auth._id)){
+                senderid=dataOfiUsersWhoChatWith[i].secoundUser._id
+            }else{
+                senderid=dataOfiUsersWhoChatWith[i].firstUser._id
+            }
+           // console.log("/*************************/")
+            const countnotSeenMessageNumber = await chat_collection.countDocuments({reciver:req.verified.user_auth._id,sender:senderid,seen:false}).sort({ date: 1 }).limit(20).exec()
+          //  console.log(countnotSeenMessageNumber)
+            
+               messageWithSeenState.push({...dataOfiUsersWhoChatWith[i]._doc,notSeenMessageNumber:countnotSeenMessageNumber})
+      
+
+        }
         res.status(res.statusCode).json({
-            data: data,
+            data: messageWithSeenState,
             status: res.statusCode
-        })  
+        }) 
+  
     }).catch(error=>{
         res.status(res.statusCode).json({
             message: error.message,
@@ -140,3 +172,36 @@ exports.getUserWhoChatWith=(req,res)=>{
 }
       
 
+exports.getUnreadUsersChatsNumber=(req,res)=>{
+    let howManyUsersChatNotSeen=0
+
+    ChatProfile_collection.find({$or:[{firstUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)},{secoundUser:Mongoose.Types.ObjectId(req.verified.user_auth._id)}]}).populate({path:"firstUser",select:'_id userName currentImageUrl'}).populate({path:"secoundUser",select:'_id userName currentImageUrl'})
+    .sort({LastMessage:-1}).exec().then(async dataOfiUsersWhoChatWith=>{
+        for(let i =0;i<dataOfiUsersWhoChatWith.length;i++){
+            let senderid=""
+            if(dataOfiUsersWhoChatWith[i].firstUser._id.equals(req.verified.user_auth._id)){
+                senderid=dataOfiUsersWhoChatWith[i].secoundUser._id
+            }else{
+                senderid=dataOfiUsersWhoChatWith[i].firstUser._id
+            }
+           // console.log("/*************************/")
+            const countnotSeenMessage = await chat_collection.findOne({$and:[{reciver:req.verified.user_auth._id},{sender:senderid},{seen:false}]}).exec()
+
+          //  console.log(countnotSeenMessageNumber)
+                if(countnotSeenMessage!=undefined && countnotSeenMessage!=null){
+                    howManyUsersChatNotSeen=howManyUsersChatNotSeen+1
+                }
+      
+        }
+        res.status(res.statusCode).json({
+            data: howManyUsersChatNotSeen,
+            status: res.statusCode
+        }) 
+  
+    }).catch(error=>{
+        res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode
+        })  
+    })
+}
