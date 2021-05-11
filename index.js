@@ -7,9 +7,8 @@ const chat=require("./socket/chat")
 var onlineUser={}
 const io = require("socket.io")(server, {
     cors: {
-      //origin: "http://localhost:3000",
-      origin: "http://46.101.169.142:3000",
-
+      origin: "http://localhost:3000",
+     // origin: "http://46.101.169.142:3000",
     }
   });
 

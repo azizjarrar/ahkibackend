@@ -3,8 +3,8 @@ const ChatProfile = mongoose.Schema({
     LastMessage:{type:Date},
     firstUser:{type:mongoose.Schema.Types.ObjectId, ref:'User',required: true},
     secoundUser:{type:mongoose.Schema.Types.ObjectId, ref:'User',required: true},
-    lastMessageSeen:{type:Boolean}
-    
+    lastMessageSeen:{type:Boolean},
+    color:{type:String}
 })
 ChatProfile.index({ firstUser: 1,secoundUser:1},{unique: true}); // schema level
 

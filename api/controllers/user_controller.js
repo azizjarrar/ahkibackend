@@ -38,7 +38,7 @@ exports.register = async (req, res) => {
           dialCode,
           tel,
           age,
-          verified:false,
+          verified:true,
           privacy:"private",
           joindate:today
         });
@@ -57,7 +57,7 @@ exports.register = async (req, res) => {
         password,
         age,
         email,
-        verified:false,
+        verified:true,
         privacy:"private",
         joindate:today
       });

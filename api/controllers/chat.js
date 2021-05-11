@@ -5,19 +5,19 @@ const ChatProfile_collection = require("../models/chatProfile");
 exports.addMessage=(req,res)=>{
     var today = new Date()
     var ChatProfile;
-    var idBothUsers 
     if(req.verified.user_auth._id>req.body.receiver){
         ChatProfile= new ChatProfile_collection({
             firstUser:req.verified.user_auth._id,
             secoundUser:req.body.receiver,
             LastMessage:today,
+            color:"#1876f3"
         })
     }else{
         ChatProfile= new ChatProfile_collection({
             firstUser:req.body.receiver,
             secoundUser:req.verified.user_auth._id,
             LastMessage:today,
-
+            color:"#1876f3"
         })
     }
     var error = ChatProfile.validateSync();
@@ -66,7 +66,11 @@ exports.addMessage=(req,res)=>{
         })
     }else{
         if(req.body.receiver!=undefined){
-            ChatProfile_collection.findOneAndUpdate({uniqueidForBothUsers:idBothUsers},{$set:{LastMessage:today}}).then(data=>{
+            
+           
+            ChatProfile_collection.findOneAndUpdate({$or:[{$and: [{ firstUser:req.verified.user_auth._id}, { secoundUser: req.body.receiver }]},{$and: [{ firstUser:req.body.receiver}, { secoundUser: req.verified.user_auth._id }]}]},{$set:{LastMessage:today}}).then(data=>{
+            }).catch(error=>{console.log(error)})
+
                 chat = new chat_collection({
                     _id: new Mongoose.Types.ObjectId(),
                     date:today,
@@ -87,7 +91,6 @@ exports.addMessage=(req,res)=>{
                   return 
                 }
                 chat.save().then(result=>{
-                    ChatProfile_collection.findOneAndUpdate({})
                     res.status(res.statusCode).json({
                         message: "message was added",
                         status: res.statusCode
@@ -98,12 +101,7 @@ exports.addMessage=(req,res)=>{
                         status: res.statusCode
                     })  
                 })
-            }).catch(e=>{
-                res.status(res.statusCode).json({
-                    message: error.message,
-                    status: res.statusCode
-                })  
-            })
+         
 
         }else{
             res.status(res.statusCode).json({
@@ -152,8 +150,8 @@ exports.getUserWhoChatWith=(req,res)=>{
            // console.log("/*************************/")
             const countnotSeenMessageNumber = await chat_collection.countDocuments({reciver:req.verified.user_auth._id,sender:senderid,seen:false}).sort({ date: 1 }).limit(20).exec()
           //  console.log(countnotSeenMessageNumber)
-            
-               messageWithSeenState.push({...dataOfiUsersWhoChatWith[i]._doc,notSeenMessageNumber:countnotSeenMessageNumber})
+                
+               messageWithSeenState.push({...dataOfiUsersWhoChatWith[i]._doc,color:dataOfiUsersWhoChatWith[i]._doc.color,notSeenMessageNumber:countnotSeenMessageNumber})
       
 
         }
@@ -198,6 +196,19 @@ exports.getUnreadUsersChatsNumber=(req,res)=>{
             status: res.statusCode
         }) 
   
+    }).catch(error=>{
+        res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode
+        })  
+    })
+}
+exports.updateColorChat=(req,res)=>{
+    ChatProfile_collection.findOneAndUpdate({$or:[{$and: [{ firstUser:req.verified.user_auth._id}, { secoundUser: req.body.receiver }]},{$and: [{ firstUser:req.body.receiver}, { secoundUser: req.verified.user_auth._id }]}]},{$set:{color:req.body.newColor}}).then(data=>{
+        res.status(res.statusCode).json({
+            data: data,
+            status: res.statusCode
+        }) 
     }).catch(error=>{
         res.status(res.statusCode).json({
             message: error.message,
