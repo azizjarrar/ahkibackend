@@ -123,6 +123,7 @@ exports.getFriendsPosts=async (req,res)=>{
 }
 exports.getTodayTopicPost=async (req,res)=>{
   dailyTopic_collection.find({}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{
+
     post_collection.find({DailyTopic:resultTodayTopic[0]._id}).limit(5000).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).sort({date: -1}).exec().then((result)=>{
       newresult=result.map(data=>{
         if(data.anonyme==false){
