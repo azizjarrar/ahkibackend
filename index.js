@@ -1,4 +1,4 @@
-const http = require('https')
+const http = require('http')
 const app = require('./app')
 const fs = require('fs')
 const path = require('path')
@@ -18,9 +18,9 @@ const io = require("socket.io")(server, {
   });
 
 server.listen(port,()=>{
-  console.log("work")
+  console.log("server online")
 })
-io.on("connection", (socket) => {
+io.on("connection to socket", (socket) => {
     socket.emit("getSocketid",socket.id)
     socket.on("saveuserOnline",data=>{
       if(data.userid!=undefined){

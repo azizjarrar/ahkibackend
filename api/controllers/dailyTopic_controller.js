@@ -43,9 +43,23 @@ exports.getLastTopic=(req,res)=>{
         })  
     })
 }
+exports.getSpecificTopic=(req,res)=>{
+    dailyTopic_collection.find({_id:req.body.idTopic}).limit(1).exec().then(result=>{
+        res.status(res.statusCode).json({
+            message: "selected topic",
+            data:result,
+            status: res.statusCode
+        }) 
+    }).catch(error=>{
+        res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode
+        })  
+    })
+}
 
 exports.getallTopics=(req,res)=>{
-    dailyTopic_collection.find({}).sort({date: -1}).limit(10).exec().then(result=>{
+    dailyTopic_collection.find({}).sort({date: -1}).limit(20).exec().then(result=>{
         res.status(res.statusCode).json({
             message: "today topic",
             data:result,

@@ -8,7 +8,8 @@ const Post = mongoose.Schema({
     postVideo:{type:String,require:true},
     anonyme:{type:Boolean},
     allowAnonymeComments:{type:Boolean},
-    DailyTopic:{type:mongoose.Schema.Types.ObjectId,ref:'DailyTopic'}
+    DailyTopic:{type:mongoose.Schema.Types.ObjectId,ref:'DailyTopic'},
+    Likes:{type:Number}
 })
 
 module.exports=mongoose.model('Post',Post)

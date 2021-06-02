@@ -63,5 +63,7 @@ router.post('/getOtherUserPosts', post_controller.getOtherUserPosts)
 router.post('/deletePost', check_auth,post_controller.deletePost)
 router.post('/getFriendsPosts', check_auth,post_controller.getFriendsPosts)
 router.post('/getTodayTopicPost',post_controller.getTodayTopicPost)
+router.post('/getTopUserPostsLikes',post_controller.getTopUserPostsLikes)
+router.post('/getSelectedTopicPosts',post_controller.getSelectedTopicPosts)
 
 module.exports = router

@@ -33,7 +33,7 @@ mongoose.connect(
       console.log('error de connection=' + err)
       throw err
     } else {
-      console.log('connection')
+      console.log('connection to database')
     }
     mongoose.set('useFindAndModify', false)
  

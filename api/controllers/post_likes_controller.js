@@ -1,5 +1,7 @@
 const post_likes_collection = require("../models/postLikes");
 const post_Comments_Likes_collection = require('../models/postCommentsLikes')
+const post_collection = require("../models/post");
+
 const Mongoose = require("mongoose");
 
 exports.addLikeToPost = async (req, res) => {
@@ -18,19 +20,30 @@ exports.addLikeToPost = async (req, res) => {
     });
     return 
   }
-  postLikes.save().then(async (postLikes) => {
-    res.status(res.statusCode).json({
-      data: postLikes,
-      status: res.statusCode,
-      state:false
-    });
-  }).catch(error=>
-    res.status(res.statusCode).json({
-        message: error.message,
+
+  //Likes
+  post_collection.findOneAndUpdate({_id:req.body.postid},{$inc:{Likes:1}}).exec().then(()=>{
+    postLikes.save().then(async (postLikes) => {
+      res.status(res.statusCode).json({
+        data: postLikes,
         status: res.statusCode,
         state:false
-      })
-    )
+      });
+    }).catch(error=>
+      res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        })
+      )
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    })
+  })
+
 
 }
 exports.checklikeToPost=(req,res)=>{
@@ -52,20 +65,31 @@ exports.checklikeToPost=(req,res)=>{
 
 }
 exports.dislikePost=(req,res)=>{
-  post_likes_collection.findOneAndRemove({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then(async (postLikes) => {
-    res.status(res.statusCode).json({
-      data: imageLikes,
-      status: res.statusCode,
-      state:false
-    });
-  }).catch(error=>{
-    res.status(res.statusCode).json({
-        message: error.message,
+  post_collection.findOneAndUpdate({_id:req.body.postid},{$inc:{Likes:-1}}).exec().then(()=>{
+    post_likes_collection.findOneAndRemove({likedPost:req.body.postid,idOfWhoLikedPost:req.verified.user_auth._id}).then(async (postLikes) => {
+      res.status(res.statusCode).json({
+        data: imageLikes,
         status: res.statusCode,
         state:false
-      })
-    }
-  )
+      });
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        })
+      }
+    )
+
+  }).catch(error=>{
+    res.status(res.statusCode).json({
+      message: error.message,
+      status: res.statusCode,
+      state:false
+    })
+  })
+
+
 }
 exports.countPostLikes=(req,res)=>{
   post_likes_collection.countDocuments({likedPost:req.body.postid}).exec().then(result=>{

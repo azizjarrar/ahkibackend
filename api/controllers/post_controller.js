@@ -16,6 +16,7 @@ exports.addPost = async (req, res) => {
         _id: new Mongoose.Types.ObjectId(),
         OwnerOfPost:req.verified.user_auth._id,
         date:new Date(),
+        Likes:0,
         postText:req.body.postText,
         postImage:req.file!=undefined && TextVideoOrImage==false?process.env.ip+req.file.path:undefined,
         postVideo:req.file!=undefined && TextVideoOrImage==true?process.env.ip+req.file.path:undefined,
@@ -121,6 +122,49 @@ exports.getFriendsPosts=async (req,res)=>{
     });
   })
 }
+exports.getSelectedTopicPosts=async(req,res)=>{
+  dailyTopic_collection.find({_id:req.body.idTopic}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{
+
+    post_collection.find({DailyTopic:resultTodayTopic[0]._id}).limit(5000).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).sort({date: -1}).exec().then((result)=>{
+      newresult=result.map(data=>{
+        if(data.anonyme==false){
+          return Promise.resolve(data)
+
+        }else{
+          const objectComment={
+            _id:data._id,
+            OwnerOfPost:{
+              _id:data.OwnerOfPost._id,
+              userName:"anonym",
+              currentImageUrl:"anonym"
+            },
+            postText:data.postText,
+            date:data.date,
+            allowAnonymeComments:data.allowAnonymeComments,
+            anonyme:data.anonyme
+          }
+          return Promise.resolve(objectComment)
+        }
+      })
+      Promise.all(newresult).then(newdata=>{
+        res.status(res.statusCode).json({
+          data: newdata,
+          status: res.statusCode,
+        });
+      })
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+      });
+    })
+  }).catch(error=>{
+      res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode
+      })  
+  })
+}
 exports.getTodayTopicPost=async (req,res)=>{
   dailyTopic_collection.find({}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{
 
@@ -195,6 +239,54 @@ exports.addDailyTopicPost = async (req, res) => {
         status: res.statusCode,
       });
 
+    }).catch(error=>{
+      res.status(res.statusCode).json({
+        message: error.message,
+        status: res.statusCode,
+        state:false
+      });
+    })
+  }
+  exports.getTopUserPostsLikes=(req,res)=>{
+    dailyTopic_collection.find({}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{
+      let idTopic=req.body.idTopic??resultTodayTopic[0]._id
+      post_collection.find({DailyTopic:idTopic}).populate({path:"OwnerOfPost",select:"userName currentImageUrl"}).sort({Likes: -1}).limit(10).exec().then((result)=>{
+       
+        newresult=result.map(data=>{
+          if(data.anonyme==false){
+            return Promise.resolve(data)
+  
+          }else{
+            const objectComment={
+              _id:data._id,
+              OwnerOfPost:{
+                _id:data.OwnerOfPost._id,
+                userName:"anonym",
+                currentImageUrl:"anonym"
+              },
+              postText:data.postText,
+              date:data.date,
+              allowAnonymeComments:data.allowAnonymeComments,
+              anonyme:data.anonyme
+            }
+            return Promise.resolve(objectComment)
+          }
+        })
+        Promise.all(newresult).then(newdata=>{
+          res.status(res.statusCode).json({
+            data: newdata,
+            message: "top  Posts",
+            status: res.statusCode,
+          });
+        })
+
+      }).catch(error=>{
+        res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        });
+      })
     }).catch(error=>{
       res.status(res.statusCode).json({
         message: error.message,
