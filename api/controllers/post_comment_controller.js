@@ -1,8 +1,50 @@
 const comments_collection = require('../models/postComments')
 const Mongoose = require("mongoose");
-exports.addComment=(req,res)=>{
+exports.addComment=async (req,res)=>{
   //
-    var comment = new comments_collection({
+    if(req.body.anonyme==true){
+      const checkIfUserAlreadyDidAnonymCommentOnPost=await comments_collection.findOne({commentOwner:req.verified.user_auth._id,postid:req.body.postid,anonyme:true}).exec()
+      if(checkIfUserAlreadyDidAnonymCommentOnPost==null){
+        var comment = new comments_collection({
+          _id:new Mongoose.Types.ObjectId(),
+          commentOwner:req.verified.user_auth._id,
+          postid:req.body.postid,
+          date:new Date(),
+          commentText:req.body.commentText,
+          anonyme:req.body.anonyme
+        });
+        var error = comment.validateSync();
+        if (error != undefined) {
+          res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+            state:false
+          });
+          return 
+        }
+        comment.save().then(async (commentData) => {
+          res.status(res.statusCode).json({
+            data: commentData,
+            status: res.statusCode,
+            state:false
+          });
+        }).catch(error=>{
+          res.status(res.statusCode).json({
+            message: error.message,
+            status: res.statusCode,
+            state:false
+          });
+        })
+      }else{
+        console.log("error")
+        res.status(res.statusCode).json({
+          message: "you have already anonym comment",
+          status: res.statusCode,
+          state:false
+        });
+      }
+    }else{
+      var comment = new comments_collection({
         _id:new Mongoose.Types.ObjectId(),
         commentOwner:req.verified.user_auth._id,
         postid:req.body.postid,
@@ -32,6 +74,8 @@ exports.addComment=(req,res)=>{
           state:false
         });
       })
+    }
+
   }
 exports.getComments=(req,res)=>{
   comments_collection.find({postid:Mongoose.Types.ObjectId(req.body.postid)}).populate({path:"postid",select:"allowAnonymeComments"}).populate({path:"commentOwner",select:"_id currentImageUrl userName"}).sort({date: -1}).skip(req.body.skip).limit(3).exec().then(result=>{

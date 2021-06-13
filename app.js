@@ -37,7 +37,7 @@ mongoose.connect(
     }
     mongoose.set('useFindAndModify', false)
  
-    var whitelist = ['http://127.0.0.1:5010/','http://localhost:3000']
+    var whitelist = ['http://127.0.0.1:5010/','http://localhost:5010/','http://localhost:3000']
     var corsOptions = {
       credentials: true, 
       origin: function(origin, callback) {
@@ -53,7 +53,7 @@ mongoose.connect(
 
     app.use(express.urlencoded({ extended: true }))
     app.use(express.json())
-    app.use(morgan('dev'))
+    //app.use(morgan('dev'))
     app.use('/uploads',express.static('./uploads'))
     app.use('/user', user_route)
     app.use('/token', refreshAccessToken_route)

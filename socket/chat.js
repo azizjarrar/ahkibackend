@@ -5,7 +5,7 @@ const chat=(socket,io,onlineUser)=>{
                     try{
                         io.to(onlineUser[message.otherUserId].socketid).emit("getMessageFromUserToUser",{text:message.text,senderId:message.senderId});
                         }catch(error){
-                            console.log(error)
+                            //console.log(error)
                         }
                 }
 
@@ -17,7 +17,7 @@ const chat=(socket,io,onlineUser)=>{
                     try{
                         io.to(onlineUser[data.otherUserId].socketid).emit("isWritingState",{isWriting:data.isWriting,senderid:data.senderid,userWhoReciveWriting:data.otherUserId});
                         }catch(error){
-                            console.log(error)
+                            //console.log(error)
                         }
                 }
             })
@@ -27,7 +27,7 @@ const chat=(socket,io,onlineUser)=>{
                     try{
                         io.to(onlineUser[data.otherUserId].socketid).emit("setvu",{state:data.state});
                         }catch(error){
-                            console.log(error)
+                           // console.log(error)
                         }
                 }
             })

@@ -211,41 +211,50 @@ exports.getTodayTopicPost=async (req,res)=>{
 }
 /************************************************/
 exports.addDailyTopicPost = async (req, res) => {
-
-  var post = new post_collection({
-      _id: new Mongoose.Types.ObjectId(),
-      OwnerOfPost:req.verified.user_auth._id,
-      date:new Date(),
-      postText:req.body.postText,
-      postImage:req.file!=undefined?process.env.ip+req.file.path:undefined,
-      anonyme:req.body.anonyme,
-      allowAnonymeComments:req.body.allowAnonymeComments,
-      DailyTopic:req.body.DailyTopicid
-    });
-
-    var error = post.validateSync();
-    if (error != undefined) {
+    const CheckIfHeAlredyHavePostInThisTopic=await post_collection.findOne({OwnerOfPost:req.verified.user_auth._id,DailyTopic:req.body.DailyTopicid}).exec()
+    if(CheckIfHeAlredyHavePostInThisTopic==null){
+      var post = new post_collection({
+        _id: new Mongoose.Types.ObjectId(),
+        OwnerOfPost:req.verified.user_auth._id,
+        date:new Date(),
+        postText:req.body.postText,
+        postImage:req.file!=undefined?process.env.ip+req.file.path:undefined,
+        anonyme:req.body.anonyme,
+        allowAnonymeComments:req.body.allowAnonymeComments,
+        DailyTopic:req.body.DailyTopicid
+      });
+  
+      var error = post.validateSync();
+      if (error != undefined) {
+        res.status(res.statusCode).json({
+          message: "invalid post",
+          status: res.statusCode,
+          state:false
+        });
+        return 
+      }
+      post.save().then(async (result) => {
+        res.status(res.statusCode).json({
+          data: result,
+          message: "post  is online",
+          status: res.statusCode,
+        });
+  
+      }).catch(error=>{
+        res.status(res.statusCode).json({
+          message: error.message,
+          status: res.statusCode,
+          state:false
+        });
+      })
+    }else{
       res.status(res.statusCode).json({
-        message: "invalid post",
+        message: "already post in this topic",
         status: res.statusCode,
         state:false
       });
-      return 
     }
-    post.save().then(async (result) => {
-      res.status(res.statusCode).json({
-        data: result,
-        message: "post  is online",
-        status: res.statusCode,
-      });
 
-    }).catch(error=>{
-      res.status(res.statusCode).json({
-        message: error.message,
-        status: res.statusCode,
-        state:false
-      });
-    })
   }
   exports.getTopUserPostsLikes=(req,res)=>{
     dailyTopic_collection.find({}).sort({date: -1}).limit(1).exec().then(resultTodayTopic=>{

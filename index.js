@@ -12,15 +12,15 @@ const chat=require("./socket/chat")
 var onlineUser={}
 const io = require("socket.io")(server, {
     cors: {
-     // origin: "http://localhost:3000"
-      origin: "http://157.230.30.155:3000",
+      origin: "http://localhost:3000"
+      //origin: "http://157.230.30.155:3000",
     }
   });
 
 server.listen(port,()=>{
   console.log("server online")
 })
-io.on("connection to socket", (socket) => {
+io.on("connection", (socket) => {
     socket.emit("getSocketid",socket.id)
     socket.on("saveuserOnline",data=>{
       if(data.userid!=undefined){
@@ -31,7 +31,6 @@ io.on("connection to socket", (socket) => {
     notification(socket,io,onlineUser)
     chat(socket,io,onlineUser)
     socket.on('disconnect', function () {
-      
     });
     
  });
